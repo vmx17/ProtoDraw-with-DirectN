@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "DirectNXAML (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "DirectNXAML (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
