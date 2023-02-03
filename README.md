@@ -3,14 +3,16 @@ A sample of DirectN
 
 ## usage
 1. restore NuGet Libraries
-2. Invoke in Debug mode. If you some trouble, please check the `Shader.hlsl` is copied to correct location and the code is ASCII.
-3. select "Dx11Renderer" page located in left pane
-4. There should be appeared triangle. This is initial data in data array.
-5. (Don't forget to) ***Push [Draw Line]*** button on right pane. It start line add state machine. To stop the mode, push [Select] button.
-6. every mouse press adds some vertex data (in float). The count of data is on right pane.
-7. It intend to add a line (means two vertecies) every "Mouse Press - Mouse Move- Mouse Release" events but I cannot see them and the first triangles disappeared (I'm now checking because it should keep location previously).
+2. Invoke in Debug mode. If you hit trouble, please check the `Shader.hlsl` is copied to correct location and the code is in ASCII.
+3. select "Dx11Renderer" page located in left pane.
+4. There should be appeared triangle. This is initial data in vertex array.
+5. (Don't forget to) ***Push [Draw Line]*** button on right pane. It start 'line add' state machine. To stop it, push [Select] button.
+6. In "line add" state machine, every mouse_press adds some vertex data (in float). The count of data is on right pane.
+7. It should add a line (means two vertecies) every "Mouse_Press - Mouse_Move- Mouse_Release" events but I cannot see them and the first triangles disappeared (I'm now checking because it should keep location previously).
 A single vertex consist of 12 float numbers. One line is 24 float numbers.
-Just press mouse, move mouse and release mouse cause Access violation error.
+
+## repro error
+In "line add" state machine, iteration to add line (press mouse, move mouse and release mouse) cause access violation error.
 
 ## code
 - The renderer is located in `Renderers\Dx11Renderer.cs`. it has a `MapVertexData()` where cause memory access violation.
