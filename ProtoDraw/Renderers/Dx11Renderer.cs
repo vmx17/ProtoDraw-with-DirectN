@@ -37,10 +37,6 @@ namespace DirectNXAML.Renderers
         private IComObject<ID3D11DepthStencilState> _depthStencilState;
         private IComObject<ID3D11ShaderResourceView> _shaderResourceView;
 
-        private XMFLOAT3 _modelRotation = new(0, 0, 0);
-        private XMFLOAT3 _modelScale = new(400, 400, 400);
-        private XMFLOAT3 _modelTranslation = new(0, 0, 1500);
-
         private float m_width;
         private float m_height;
         private float m_nearZ = 1000.0f;
@@ -303,35 +299,45 @@ namespace DirectNXAML.Renderers
         }
         #endregion
 
-        public void SetBGColor(float R, float G, float B, float A = 1.0f)
+        public void SetBGColor(float _r, float _g, float _b, float _a = 1.0f)
         {
             StopRendering();
             lock (m_CriticalLock)
             {
-                RenderBackgroundColor[0] = R;
-                RenderBackgroundColor[1] = G;
-                RenderBackgroundColor[2] = B;
-                RenderBackgroundColor[3] = A;
+                RenderBackgroundColor[0] = _r;
+                RenderBackgroundColor[1] = _g;
+                RenderBackgroundColor[2] = _b;
+                RenderBackgroundColor[3] = _a;
             }
             StartRendering();
         }
 
         #region Rendering
+        private D2D_MATRIX_4X4_F m_transform, m_projection;
+        public D2D_MATRIX_4X4_F Transform { get => m_transform; private set => m_transform = value; }
+        public D2D_MATRIX_4X4_F Projection { get => m_projection; private set => m_projection = value; }
+
+        private Vector3 _modelRotation = new(0, 0, 0);
+        private Vector3 _modelScale = new(400, 400, 400);
+        private Vector3 _modelTranslation = new(0, 0, 1500);
         public bool Render()
         {
             lock (m_CriticalLock)
             {
                 // these are substantially constant
-                var rotateX = D2D_MATRIX_4X4_F.RotationX(_modelRotation.x);
-                var rotateY = D2D_MATRIX_4X4_F.RotationY(_modelRotation.y);
-                var rotateZ = D2D_MATRIX_4X4_F.RotationZ(_modelRotation.z);
-                var scale = D2D_MATRIX_4X4_F.Scale(_modelScale.x, _modelScale.y, _modelScale.z);
-                var translate = D2D_MATRIX_4X4_F.Translation(_modelTranslation.x, _modelTranslation.y, _modelTranslation.z);
-
+                var rotateX = D2D_MATRIX_4X4_F.RotationX(_modelRotation.X);
+                var rotateY = D2D_MATRIX_4X4_F.RotationY(_modelRotation.Y);
+                var rotateZ = D2D_MATRIX_4X4_F.RotationZ(_modelRotation.Z);
+                var scale = D2D_MATRIX_4X4_F.Scale(_modelScale.X, _modelScale.Y, _modelScale.Z);
+                var translate = D2D_MATRIX_4X4_F.Translation(_modelTranslation.X, _modelTranslation.Y, _modelTranslation.Z);
+                
+                m_transform = rotateX * rotateY * rotateZ * scale * translate;
+                m_projection = new D2D_MATRIX_4X4_F((2 * m_nearZ) / m_width, 0, 0, 0, 0, (2 * m_nearZ) / m_height, 0, 0, 0, 0, m_farZ / (m_farZ - m_nearZ), 1, 0, 0, (m_nearZ * m_farZ) / (m_nearZ - m_farZ), 0);
+                
                 void mapAction(ref D3D11_MAPPED_SUBRESOURCE mapped, ref VS_CONSTANT_BUFFER buffer)
                 {
-                    buffer.Transform = rotateX * rotateY * rotateZ * scale * translate;
-                    buffer.Projection = new D2D_MATRIX_4X4_F((2 * m_nearZ) / m_width, 0, 0, 0, 0, (2 * m_nearZ) / m_height, 0, 0, 0, 0, m_farZ / (m_farZ - m_nearZ), 1, 0, 0, (m_nearZ * m_farZ) / (m_nearZ - m_farZ), 0);
+                    buffer.Transform = m_transform;
+                    buffer.Projection = m_projection;
                     buffer.LightVector = new XMFLOAT3(0, 0, 1);
                 }
 
