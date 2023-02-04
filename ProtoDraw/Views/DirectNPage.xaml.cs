@@ -1,4 +1,5 @@
-﻿using DirectNXAML.Renderers;
+﻿using DirectNXAML.DrawData;
+using DirectNXAML.Renderers;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -87,6 +88,7 @@ namespace DirectNXAML.Views
             viewModel.ActualWidth = (sender as SwapChainPanel).ActualWidth;
             viewModel.ActualHeight = (sender as SwapChainPanel).ActualHeight;
             viewModel.SwapChainActualSize = (sender as SwapChainPanel).ActualSize;
+            viewModel.ShaderPanel_SizeChangedCommand.Execute(e);
         }
 
         private void SwapChainPanel_PointerMoved(object sender, PointerRoutedEventArgs e)
@@ -107,7 +109,7 @@ namespace DirectNXAML.Views
                 viewModel.NormalizedPressedPoint = e.GetCurrentPoint(sender as SwapChainPanel).Position;
                 viewModel.NormalizedPressedX = viewModel.NormalizedPressedPoint.X / viewModel.ActualWidth;
                 viewModel.NormalizedPressedY = viewModel.NormalizedPressedPoint.Y / viewModel.ActualHeight;
-                viewModel.NormalizedPressedZ = 0.0;
+                viewModel.NormalizedPressedZ = Primitive.Fz;
             }
             viewModel.ShaderPanel_PointerPressedCommand.Execute(e);
         }

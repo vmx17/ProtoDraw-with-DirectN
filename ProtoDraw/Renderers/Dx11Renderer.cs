@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
 using System.IO;        // for Path.Combine
+using System.Numerics;
 using System.Runtime.InteropServices;
 using WinRT;
 
@@ -332,7 +333,7 @@ namespace DirectNXAML.Renderers
 
                 _deviceContext.WithMap<VS_CONSTANT_BUFFER>(_constantBuffer, 0, D3D11_MAP.D3D11_MAP_WRITE_DISCARD, mapAction);
 
-                uint stride = (uint)FVertex3D.Stride * sizeof(float); // vertex size (12 floats: float3 position, float3 normal, float2 texcoord, float4 color)
+                uint stride = (uint)FVertex3D.Stride * sizeof(float); // vertex size (12 floats: Vector3 position, Vector3 normal, Vector2 texcoord, Vector4 color)
                 uint offset = 0;
 
                 _deviceContext.Object.ClearRenderTargetView(_renderTargetView.Object, RenderBackgroundColor);
