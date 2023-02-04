@@ -23,9 +23,10 @@ namespace DirectNXAML
         /// </summary>
         public App()
         {
+            DrawManager = new SimpleDrawLineManager();
             this.InitializeComponent();
         }
-        IntPtr m_hwnd = IntPtr.Zero;
+        IntPtr m_hwnd;
         public IntPtr Hwnd { get { return m_hwnd; } }
         /// <summary>
         /// Invoked when the application is launched normally by the end user.  Other entry points

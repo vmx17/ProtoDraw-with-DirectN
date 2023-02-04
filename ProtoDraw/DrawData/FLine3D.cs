@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Numerics;
 
 namespace DirectNXAML.DrawData
 {
@@ -6,7 +7,7 @@ namespace DirectNXAML.DrawData
     {
         public new static readonly int Stride = (FVertex3D.Stride *2); // FLine3D have two vertecies
         private FVertex3D m_sp, m_ep;
-        public FVertex3D Sp { get=>m_sp; set => m_sp = value; }
+        public FVertex3D Sp { get => m_sp; set => m_sp = value; }
         public FVertex3D Ep { get => m_ep; set => m_ep = value; }
         public FLine3D()
         {
@@ -18,7 +19,7 @@ namespace DirectNXAML.DrawData
             m_sp = new FVertex3D(_sp);
             m_ep = new FVertex3D(_ep);
         }
-        public FLine3D(float4 _col) : this()
+        public FLine3D(Vector4 _col) : this()
         {
             this.SetCol(_col);
         }
@@ -27,7 +28,7 @@ namespace DirectNXAML.DrawData
             m_sp.X = _x0; m_sp.Y = _y0;
             m_ep.X = _x1; m_ep.Y = _y1;
         }
-        public override void SetCol(float4 _col)
+        public override void SetCol(Vector4 _col)
         {
             Sp.SetCol(_col);
             Ep.SetCol(_col);

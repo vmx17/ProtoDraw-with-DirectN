@@ -6,7 +6,9 @@ using DirectNXAML.Renderers;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using System;
+using System.Globalization;
 using System.Numerics;
+using System.Text;
 using System.Windows.Input;
 
 namespace DirectNXAML.ViewModels
@@ -14,7 +16,7 @@ namespace DirectNXAML.ViewModels
     internal class DirectNPageViewModel : ObservableObject
 	{
 		Dx11Renderer m_renderer = null;
-		// for a simple line drawing state transition
+        // for a simple line drawing state transition
         enum ELineGetState : int
         {
             none = -1,
@@ -26,20 +28,18 @@ namespace DirectNXAML.ViewModels
         ELineGetState m_state = ELineGetState.none;
         private FLine3D m_lin;
         internal Dx11Renderer PageRenderer { get { return m_renderer; } set { m_renderer = value; } }
-		int m_vertex_count = 0;
-        public int VertexCount { get => m_vertex_count; set => SetProperty(ref m_vertex_count, value); }
-		private void UpdateVertexCountDisplay() { VertexCount = ((App)Application.Current).DrawManager.VertexData.Length; }
+
         /// <summary>
         /// Constructor
         /// </summary>
         internal DirectNPageViewModel()
         {
-            ((App)Application.Current).DrawManager = new SimpleDrawLineManager();
             m_renderer = new Dx11Renderer();
 
             SetState_DrawLineCommand += SetState_DrawLine;
             SetState_SelectCommand += SetState_Select;
 
+            ShaderPanel_SizeChangedCommand = new RelayCommand<SizeChangedEventArgs>(ShaderPanel_SizeChanged);
             ShaderPanel_PointerMovedCommand = new RelayCommand<PointerRoutedEventArgs>(ShaderPanel_PointerMoved);
 			ShaderPanel_PointerPressedCommand = new RelayCommand<PointerRoutedEventArgs>(ShaderPanel_PointerPressed);
 			ShaderPanel_PointerReleasedCommand = new RelayCommand<PointerRoutedEventArgs>(ShaderPanel_PointerReleased);
@@ -65,11 +65,17 @@ namespace DirectNXAML.ViewModels
         {
 			m_state = ELineGetState.none;	// xxxx reset state machine first.
         }
-
+        internal ICommand ShaderPanel_SizeChangedCommand { get; private set; }
+        private void ShaderPanel_SizeChanged(SizeChangedEventArgs args)
+        {
+            SetLocalSizeText();
+        }
         public ICommand ShaderPanel_PointerMovedCommand { get; private set; }
 		private void ShaderPanel_PointerMoved(PointerRoutedEventArgs args)
-		{
-			args.Handled = true;
+        {
+            SetLocalPointerText();
+            SetNormalizedPointerPosition();
+            args.Handled = true;
 
             if (m_state == ELineGetState.Pressed)
             {
@@ -82,7 +88,8 @@ namespace DirectNXAML.ViewModels
         }
 		public ICommand ShaderPanel_PointerPressedCommand { get; private set; }
 		private void ShaderPanel_PointerPressed(PointerRoutedEventArgs args)
-		{
+        {
+            SetNormalizedPointerPressed();
             args.Handled = true;
 
             if (m_state == ELineGetState.Begin)
@@ -101,8 +108,9 @@ namespace DirectNXAML.ViewModels
 
 		public ICommand ShaderPanel_PointerReleasedCommand { get; private set; }
 		private void ShaderPanel_PointerReleased(PointerRoutedEventArgs args)
-		{
-			args.Handled = true;
+        {
+            SetNormalizedPointerReleased();
+            args.Handled = true;
 
             if (m_state == ELineGetState.Pressed)
             {
@@ -117,7 +125,85 @@ namespace DirectNXAML.ViewModels
                 m_state = ELineGetState.Begin;
             }
         }
-		double m_local_height, m_local_width;
+        #region for display
+        public int VertexCount { get => m_vertex_count; set => SetProperty(ref m_vertex_count, value); }
+        internal string LocalSizeText { get => m_local_size_text; set => SetProperty(ref m_local_size_text, value); }
+        internal string LocalPointerText { get => m_local_pointer_text; set => SetProperty(ref m_local_pointer_text, value); }
+        internal string NormalizedPointerText { get => m_normalized_pointer_text; set => SetProperty(ref m_normalized_pointer_text, value); }
+        internal string NormalizedPointerPressedText { get => m_normalized_pointer_pressed_text; set => SetProperty(ref m_normalized_pointer_pressed_text, value); }
+        internal string NormalizedPointerReleasedText { get => m_normalized_pointer_released_text; set => SetProperty(ref m_normalized_pointer_released_text, value); }
+        internal string VertexCountText { get => m_vertex_count_text; set => SetProperty(ref m_vertex_count_text, value); }
+
+        int m_vertex_count = 0;
+        private string m_vertex_count_text = "Vertecies: ";
+        private void UpdateVertexCountDisplay()
+        {
+            VertexCount = ((App)Application.Current).DrawManager.VertexData.Length;
+            VertexCountText = "Vertecies: " + VertexCount.ToString();
+        }
+        string m_local_pointer_text = "Local Pointer:";
+        private void SetLocalPointerText()
+        {
+            var sb = new StringBuilder("Local Pointer:(");
+            sb.Append(m_local_pointer.X.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(", ")
+                .Append(m_local_pointer.Y.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(") ");
+            LocalPointerText = sb.ToString();
+            sb.Clear();
+        }
+        string m_normalized_pointer_text= "Normalized Pointer:";
+        private void SetNormalizedPointerPosition()
+        {
+            StringBuilder sb = new StringBuilder("Normalized Pointer:(");
+            sb.Append(NormalizedPointerX.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(", ")
+                .Append(NormalizedPointerY.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(", ")
+                .Append(NormalizedPointerZ.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(") ");
+            NormalizedPointerText = sb.ToString();
+            sb.Clear();
+        }
+        string m_normalized_pointer_pressed_text = "Normalized Pressed";
+        private void SetNormalizedPointerPressed()
+        {
+            StringBuilder sb = new StringBuilder("Normalized Pressed:(");
+            sb.Append(NormalizedPointerX.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(", ")
+                .Append(NormalizedPointerY.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(", ")
+                .Append(NormalizedPointerZ.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(") ");
+            NormalizedPointerPressedText = sb.ToString();
+            sb.Clear();
+        }
+        string m_normalized_pointer_released_text = "Normalized Released";
+        private void SetNormalizedPointerReleased()
+        {
+            StringBuilder sb = new StringBuilder("Normalized Released:(");
+            sb.Append(NormalizedPointerX.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(", ")
+                .Append(NormalizedPointerY.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(", ")
+                .Append(NormalizedPointerZ.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(") ");
+            NormalizedPointerReleasedText = sb.ToString();
+        }
+        string m_local_size_text= "Local Size:";
+        private void SetLocalSizeText()
+        {
+            StringBuilder sb = new StringBuilder("Local Size:(");
+            sb.Append(LocalWidth.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(", ")
+                .Append(LocalHeight.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(") ");
+            LocalSizeText = sb.ToString();
+            sb.Clear();
+        }
+        #endregion
+
+        double m_local_height, m_local_width;
 		internal double LocalHeight { get => m_local_height; set => SetProperty(ref m_local_height, value); }
 		internal double LocalWidth { get => m_local_width; set => SetProperty(ref m_local_width, value); }
 

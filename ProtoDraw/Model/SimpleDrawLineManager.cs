@@ -27,10 +27,7 @@ namespace DirectNXAML.Model
                  0.5f,-0.5f, 0f,    0.0f,0.0f,-1.0f, 0.0f,0.0f,  1f,1f,0f,1f,
                 -0.5f,-0.5f, 0f,    0.0f,0.0f,-1.0f, 0.0f,0.0f,  0f,1f,1f,1f,
             };
-            m_vertex_list = m_vertex_data.ToList();
-            Add(new FLine3D(new FVertex3D(-0.5f, -0.5f), new FVertex3D(0f, 0.5f)));
-            Add(new FLine3D(new FVertex3D(0f, 0.5f), new FVertex3D(0.5f, -0.5f)));
-            Add(new FLine3D(new FVertex3D(0.5f, -0.5f), new FVertex3D(-0.5f, -0.5f)));
+            m_vertex_list = m_vertex_data.ToList(); // only initialized
         }
         public void Add(FLine3D _line)
         {
