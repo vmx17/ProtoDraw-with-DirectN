@@ -95,7 +95,7 @@ namespace DirectNXAML.ViewModels
 
             if (m_state == ELineGetState.Begin)
             {
-                ColorData.SetLine(ColorData.Blue);
+                ColorData.SetLine(ColorData.RubberLine);
                 m_lin = new FLine3D();
                 m_lin.Sp.X = m_lin.Ep.X = (float)NormalizedPointerX;
                 m_lin.Sp.Y = m_lin.Ep.Y = (float)NormalizedPointerY;
@@ -115,7 +115,7 @@ namespace DirectNXAML.ViewModels
 
             if (m_state == ELineGetState.Pressed)
             {
-                ColorData.SetLine(ColorData.White);
+                ColorData.SetLine(ColorData.FixedLine);
                 ((App)Application.Current).DrawManager.DelLastLine();
                 m_lin.Ep.X = (float)NormalizedPointerX;
                 m_lin.Ep.Y = (float)NormalizedPointerY;
