@@ -12,7 +12,10 @@ A sample of DirectN
 A single vertex consist of 12 float numbers. One line is 24 float numbers.
 
 ## repro error
-In "line add" state machine, iteration to add line (press mouse, move mouse and release mouse) cause access violation error.
+- (It is getting rare.) In "line add" state machine, iteration to add line (press mouse, move mouse and release mouse) cause access violation error.
+- does not appear added line.
+(known bug)
+- even though after successful update, the added data is incorrectly appears in vertex buffer. There are is matrix unmatch. So, if it comes to visible, the line appears different position (but in normalized area, inside view volume). 
 
 ## code
 - The renderer is located in `Renderers\Dx11Renderer.cs`. it has a `MapVertexData()` where cause memory access violation.
