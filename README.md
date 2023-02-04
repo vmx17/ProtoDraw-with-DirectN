@@ -19,10 +19,6 @@ A single vertex consist of 12 float numbers. One line is 24 float numbers.
 - even though after successful update, the added data is incorrectly appears in vertex buffer. There are is matrix unmatch. So, if it comes to visible, the line appears different position (but in normalized area, inside view volume).
 - changing windows size does not invoke swap chain resize. Repeating resizing action fix this.
 
-- does not appear added line.
-(known bug)
-- even though after successful update, the added data is incorrectly appears in vertex buffer. There are is matrix unmatch. So, if it comes to visible, the line appears different position (but in normalized area, inside view volume). 
-
 ## code
 - The renderer is located in `Renderers\Dx11Renderer.cs`. it has a `MapVertexData()` where cause memory access violation.
 - The data provider is `Model\SimpleDrawLineManager.cs`. At the top of the code has `VertexData` property which should be mapped as vertex data in renderer.
