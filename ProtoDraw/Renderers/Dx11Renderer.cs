@@ -380,14 +380,46 @@ namespace DirectNXAML.Renderers
         private static extern void CopyMemory(IntPtr destination, IntPtr source, IntPtr length);
         private void MapVertexData()
         {
+            RemakeVBuffer();
             var gc = GCHandle.Alloc(((App)Application.Current).DrawManager.VertexData, GCHandleType.Pinned);
             var vertexData = new D3D11_SUBRESOURCE_DATA();
+            var data_size = ((App)Application.Current).DrawManager.VertexData.SizeOf(); // for debug
             vertexData.pSysMem = gc.AddrOfPinnedObject();
             gc.Free();
 
             var map = _deviceContext.Map(_vertexBuffer, 0, D3D11_MAP.D3D11_MAP_WRITE_DISCARD);
-            CopyMemory(map.pData, vertexData.pSysMem, (IntPtr)((App)Application.Current).DrawManager.VertexData.SizeOf());
-            _deviceContext.Unmap(_vertexBuffer, 0);
+            try
+            {
+                CopyMemory(map.pData, vertexData.pSysMem, (IntPtr)((App)Application.Current).DrawManager.VertexData.SizeOf());
+            }
+            catch(Exception ex) { var msg = ex.Message; }   // for debug
+            finally
+            {
+                _deviceContext.Unmap(_vertexBuffer, 0);
+                gc.Free();
+            }
+        }
+        // This cause exception: 'COM object that has been separated from its underlying RCW cannot be used.'
+        private void RemakeVBuffer()
+        {
+            D3D11_BUFFER_DESC vertexBufferDesc;
+            _vertexBuffer.Object.GetDesc(out vertexBufferDesc);
+            var gc = GCHandle.Alloc(((App)Application.Current).DrawManager.VertexData, GCHandleType.Pinned);
+            vertexBufferDesc.ByteWidth = (uint)((App)Application.Current).DrawManager.VertexData.SizeOf();
+
+            var subResourceData = new D3D11_SUBRESOURCE_DATA();
+            subResourceData.pSysMem = gc.AddrOfPinnedObject();
+
+            try
+            {
+                if ((_vertexBuffer!=null) && !_vertexBuffer.IsDisposed) _vertexBuffer.Dispose();
+                _vertexBuffer = _device.CreateBuffer(vertexBufferDesc, subResourceData);  // Runtime Callable Wrapper
+            }
+            catch (Exception ex)
+            {
+                var a = ex.Message; // for debug
+            }
+            gc.Free();
         }
         #endregion
 
