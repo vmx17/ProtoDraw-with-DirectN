@@ -63,7 +63,8 @@ namespace DirectNXAML.ViewModels
         internal RoutedEventHandler SetState_SelectCommand { get; private set; }
         private void SetState_Select(object sender, RoutedEventArgs e)
         {
-			m_state = ELineGetState.none;	// xxxx reset state machine first.
+            // reset any state machine before here
+			m_state = ELineGetState.none;
         }
         internal ICommand ShaderPanel_SizeChangedCommand { get; private set; }
         private void ShaderPanel_SizeChanged(SizeChangedEventArgs args)
