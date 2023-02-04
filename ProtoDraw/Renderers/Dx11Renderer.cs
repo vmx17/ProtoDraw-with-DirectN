@@ -78,6 +78,9 @@ namespace DirectNXAML.Renderers
             _swapChain.Object.Present(0, 0);
         }
 
+        /// <summary>
+        /// CleanUp
+        /// </summary>
         public void CleanUp()
         {
             StopRendering();
@@ -106,11 +109,10 @@ namespace DirectNXAML.Renderers
             if ((_shaderResourceView != null) && !_shaderResourceView.IsDisposed) _shaderResourceView.Dispose();
 
         }
-        #region Initialize()
+        #region Initialize
 
         public void Initialize(uint _width = 1024, uint _height = 1024)
         {
-            //if (m_is_initialized) return;
             lock (m_CriticalLock)
             {
                 m_width = _width;
@@ -156,7 +158,6 @@ namespace DirectNXAML.Renderers
                 _viewPort.MinDepth = 0.0f;
                 _viewPort.MaxDepth = 1.0f;
 
-
                 var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Shaders.hlsl");
                 if (!File.Exists(path))
                 {
@@ -196,7 +197,9 @@ namespace DirectNXAML.Renderers
 
                 var gc = GCHandle.Alloc(((App)Application.Current).DrawManager.VertexData, GCHandleType.Pinned);
                 var vertexBufferDesc = new D3D11_BUFFER_DESC();
-                vertexBufferDesc.ByteWidth = (uint)((App)Application.Current).DrawManager.VertexData.SizeOf();
+
+                // 2358 = 14148 vertecies(x6) = 169776byte (x12) limit of 8GB Intel Celeron J4125
+                vertexBufferDesc.ByteWidth = (uint)((App)Application.Current).DrawManager.VertexData.SizeOf() * 2358;
                 vertexBufferDesc.Usage = D3D11_USAGE.D3D11_USAGE_DYNAMIC;
                 vertexBufferDesc.BindFlags = (uint)D3D11_BIND_FLAG.D3D11_BIND_VERTEX_BUFFER;
                 vertexBufferDesc.CPUAccessFlags = (uint)D3D11_CPU_ACCESS_FLAG.D3D11_CPU_ACCESS_WRITE;
@@ -380,7 +383,7 @@ namespace DirectNXAML.Renderers
         private static extern void CopyMemory(IntPtr destination, IntPtr source, IntPtr length);
         private void MapVertexData()
         {
-            RemakeVBuffer();
+            //RemakeVBuffer();
             var gc = GCHandle.Alloc(((App)Application.Current).DrawManager.VertexData, GCHandleType.Pinned);
             var vertexData = new D3D11_SUBRESOURCE_DATA();
             var data_size = ((App)Application.Current).DrawManager.VertexData.SizeOf(); // for debug
@@ -392,11 +395,13 @@ namespace DirectNXAML.Renderers
             {
                 CopyMemory(map.pData, vertexData.pSysMem, (IntPtr)((App)Application.Current).DrawManager.VertexData.SizeOf());
             }
-            catch(Exception ex) { var msg = ex.Message; }   // for debug
+            catch (Exception ex)
+            {
+                var msg = ex.Message;   // for debug
+            }
             finally
             {
                 _deviceContext.Unmap(_vertexBuffer, 0);
-                gc.Free();
             }
         }
         // This cause exception: 'COM object that has been separated from its underlying RCW cannot be used.'
