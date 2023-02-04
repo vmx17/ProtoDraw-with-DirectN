@@ -1,5 +1,7 @@
 # ProtoDraw with DirectN
-A sample of DirectN
+A prototyping with DirectN using WinUI3 desktop for some draw application.
+
+Very thanks to [Simon Mourier](https://github.com/smourier) san.
 
 ## usage
 1. open in VisualStudio 2022 and restore NuGet packages.
@@ -8,7 +10,7 @@ A sample of DirectN
 4. There should be appeared triangle. This is initial data in vertex array. (primitive is "Line list", not Triangle)
 5. (Don't forget to) ***Push [Draw Line]*** button on right pane. It start 'line add' state machine. To stop it, push [Select] button.
 6. In "line add" state machine, every mouse_press adds some vertex data (in float). The count of data is on right pane.
-7. It should add a line (means two vertecies) every "Mouse_Press - Mouse_Move- Mouse_Release" events.
+7. It should add a line (means two vertecies) every "Mouse_Press - Mouse_Move- Mouse_Release" events. Blue line shows it as rubber band and fixed line is in white.
 
 ## repro error
 - Rare (fixed?). In "line add" state machine, iteration to add line (press mouse, move mouse and release mouse) cause access violation error.
