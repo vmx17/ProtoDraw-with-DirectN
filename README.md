@@ -16,7 +16,7 @@ Very thanks to [Simon Mourier](https://github.com/smourier) san.
 - Rare (fixed?). In "line add" state machine, iteration to add line (press mouse, move mouse and release mouse) cause access violation error.
 
 ## known bug
-- even though after successful update, the added data is incorrectly appears in vertex buffer. (There are is matrix unmatch. Left up (0,0) is tranlated center of the screen.)
+- even though after successful update, the added data is incorrectly appears in vertex buffer. There is matrix unmatch. (Left up (0,0) is tranlated center of the screen.)
 - changing windows size does not invoke swap chain resize. Repeating resizing action fix this.
 
 ## issue
