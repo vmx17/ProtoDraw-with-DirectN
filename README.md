@@ -17,8 +17,7 @@ A single vertex consist of 12 float numbers. One line is 24 float numbers.
 
 ## known bug
 - even though after successful update, the added data is incorrectly appears in vertex buffer. There are is matrix unmatch. So, if it comes to visible, the line appears different position (but in normalized area, inside view volume).
-- changing windows size does not invoke swap chain resize. Repeating resizing action fix this.
-
+- changing windows size does not invoke resize SwapChainPanel (randomly). Repeating resizing action fix this.
 
 ## code
 - The renderer is located in `Renderers\Dx11Renderer.cs`. it has a `MapVertexData()` where cause memory access violation.
