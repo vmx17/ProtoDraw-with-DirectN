@@ -396,7 +396,6 @@ namespace DirectNXAML.Renderers
             finally
             {
                 _deviceContext.Unmap(_vertexBuffer, 0);
-                gc.Free();
             }
         }
         // This cause exception: 'COM object that has been separated from its underlying RCW cannot be used.'
