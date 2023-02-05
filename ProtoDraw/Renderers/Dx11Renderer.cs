@@ -384,6 +384,7 @@ namespace DirectNXAML.Renderers
         #endregion
 
         #region update buffer data
+        private uint m_previous_v_buffersize = 0;
         public void UpdateVertexBuffer()
         {
             lock (m_CriticalLock)
@@ -399,9 +400,15 @@ namespace DirectNXAML.Renderers
         private void MapVertexData()
         {
             RemakeVBuffer();
+            
+            uint new_vbuffer_size = (uint)((App)Application.Current).DrawManager.VertexData.SizeOf();
+            if (new_vbuffer_size > m_previous_v_buffersize)
+            {
+                m_previous_v_buffersize = new_vbuffer_size + 144;   // +144: to reduce remake time
+                RemakeVBuffer(m_previous_v_buffersize);
+            }
             var gc = GCHandle.Alloc(((App)Application.Current).DrawManager.VertexData, GCHandleType.Pinned);
             var vertexData = new D3D11_SUBRESOURCE_DATA();
-            var data_size = ((App)Application.Current).DrawManager.VertexData.SizeOf(); // for debug
             vertexData.pSysMem = gc.AddrOfPinnedObject();
             gc.Free();
 
@@ -419,14 +426,14 @@ namespace DirectNXAML.Renderers
                 _deviceContext.Unmap(_vertexBuffer, 0);
             }
         }
-        // This cause exception: 'COM object that has been separated from its underlying RCW cannot be used.'
-        private void RemakeVBuffer()
+        
+        private void RemakeVBuffer(uint new_size)
         {
-            D3D11_BUFFER_DESC vertexBufferDesc;
-            _vertexBuffer.Object.GetDesc(out vertexBufferDesc);
+            //D3D11_BUFFER_DESC vertexBufferDesc;
+            _vertexBuffer.Object.GetDesc(out D3D11_BUFFER_DESC vertexBufferDesc);
             var gc = GCHandle.Alloc(((App)Application.Current).DrawManager.VertexData, GCHandleType.Pinned);
-            vertexBufferDesc.ByteWidth = (uint)((App)Application.Current).DrawManager.VertexData.SizeOf();
-
+            
+            vertexBufferDesc.ByteWidth = new_size;
             var subResourceData = new D3D11_SUBRESOURCE_DATA();
             subResourceData.pSysMem = gc.AddrOfPinnedObject();
 
