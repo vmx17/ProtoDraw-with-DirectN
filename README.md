@@ -3,6 +3,8 @@ A prototyping with DirectN using WinUI3 desktop for some draw application.
 
 Very thanks to [Simon Mourier](https://github.com/smourier) san.
 
+This program was made to [ask](https://github.com/smourier/DirectN/issues/32) about DirectN.
+
 ## usage
 1. open in VisualStudio 2022 and restore NuGet packages.
 2. Invoke in Debug mode. If you hit trouble, please check the `Shader.hlsl` is copied to correct location and the code is in ASCII.
