@@ -21,6 +21,7 @@ namespace DirectNXAML.Renderers
         object m_CriticalLock = new();
 
         private SwapChainPanel m_swapChainPanel = null;
+        private IComObject<IDXGIDevice1> _dxgiDevice;
         private IComObject<ID3D11Device> _device;
         private IComObject<ID3D11DeviceContext> _deviceContext;
         private IComObject<IDXGISwapChain1> _swapChain;
@@ -109,8 +110,8 @@ namespace DirectNXAML.Renderers
             if ((_shaderResourceView != null) && !_shaderResourceView.IsDisposed) _shaderResourceView.Dispose();
 
         }
-        #region Initialize
 
+        #region Initialize
         public void Initialize(uint _width = 1024, uint _height = 1024)
         {
             lock (m_CriticalLock)
@@ -136,8 +137,9 @@ namespace DirectNXAML.Renderers
                 desc.Flags = 0;
 
                 IDXGIDevice1 dxgiDevice = _device.As<IDXGIDevice1>(true);
-                var DXGIDev = new ComObject<IDXGIDevice1>(dxgiDevice);
-                _swapChain = fac.CreateSwapChainForComposition<IDXGISwapChain1>(DXGIDev, desc);
+                _dxgiDevice = new ComObject<IDXGIDevice1>(dxgiDevice);
+
+                _swapChain = fac.CreateSwapChainForComposition<IDXGISwapChain1>(_dxgiDevice, desc);
 
                 var frameBuffer = _swapChain.GetBuffer<ID3D11Texture2D>(0);
                 _renderTargetView = _device.CreateRenderTargetView(frameBuffer);
@@ -198,8 +200,9 @@ namespace DirectNXAML.Renderers
                 var gc = GCHandle.Alloc(((App)Application.Current).DrawManager.VertexData, GCHandleType.Pinned);
                 var vertexBufferDesc = new D3D11_BUFFER_DESC();
 
-                // 2358 = 14148 vertecies(x6) = 169776byte (x12) limit of 8GB Intel Celeron J4125
-                vertexBufferDesc.ByteWidth = (uint)((App)Application.Current).DrawManager.VertexData.SizeOf() * 2358;
+                // initiali data contains 6 vertecies.
+                // 2358 = 14148 vertecies(x6) = 169776byte (x12) limit of 8GB Intel Celeron J4125?
+                vertexBufferDesc.ByteWidth = (uint)((App)Application.Current).DrawManager.VertexData.SizeOf();// * 2358;
                 vertexBufferDesc.Usage = D3D11_USAGE.D3D11_USAGE_DYNAMIC;
                 vertexBufferDesc.BindFlags = (uint)D3D11_BIND_FLAG.D3D11_BIND_VERTEX_BUFFER;
                 vertexBufferDesc.CPUAccessFlags = (uint)D3D11_CPU_ACCESS_FLAG.D3D11_CPU_ACCESS_WRITE;
@@ -316,6 +319,12 @@ namespace DirectNXAML.Renderers
         }
 
         #region Rendering
+
+        D2D_MATRIX_4X4_F m_transform;
+        D2D_MATRIX_4X4_F m_projection;
+        public D2D_MATRIX_4X4_F Transform { get=>m_transform; set => m_transform = value; }
+        public D2D_MATRIX_4X4_F Projection { get => m_projection; set => m_projection = value; }
+        
         public bool Render()
         {
             lock (m_CriticalLock)
@@ -327,10 +336,16 @@ namespace DirectNXAML.Renderers
                 var scale = D2D_MATRIX_4X4_F.Scale(_modelScale.x, _modelScale.y, _modelScale.z);
                 var translate = D2D_MATRIX_4X4_F.Translation(_modelTranslation.x, _modelTranslation.y, _modelTranslation.z);
 
+                m_transform = rotateX * rotateY * rotateZ * scale * translate;
+                m_projection= new D2D_MATRIX_4X4_F((2 * m_nearZ) / m_width, 0, 0, 0, 0, (2 * m_nearZ) / m_height, 0, 0, 0, 0, m_farZ / (m_farZ - m_nearZ), 1, 0, 0, (m_nearZ * m_farZ) / (m_nearZ - m_farZ), 0); ;
+
                 void mapAction(ref D3D11_MAPPED_SUBRESOURCE mapped, ref VS_CONSTANT_BUFFER buffer)
                 {
-                    buffer.Transform = rotateX * rotateY * rotateZ * scale * translate;
-                    buffer.Projection = new D2D_MATRIX_4X4_F((2 * m_nearZ) / m_width, 0, 0, 0, 0, (2 * m_nearZ) / m_height, 0, 0, 0, 0, m_farZ / (m_farZ - m_nearZ), 1, 0, 0, (m_nearZ * m_farZ) / (m_nearZ - m_farZ), 0);
+                    buffer.Transform = m_transform;
+                    //buffer.Transform = rotateX * rotateY * rotateZ * scale * translate;
+                    buffer.Projection = m_projection;
+                    //buffer.Projection = new D2D_MATRIX_4X4_F((2 * m_nearZ) / m_width, 0, 0, 0, 0, (2 * m_nearZ) / m_height, 0, 0, 0, 0, m_farZ / (m_farZ - m_nearZ), 1, 0, 0, (m_nearZ * m_farZ) / (m_nearZ - m_farZ), 0);
+
                     buffer.LightVector = new XMFLOAT3(0, 0, 1);
                 }
 
@@ -383,7 +398,7 @@ namespace DirectNXAML.Renderers
         private static extern void CopyMemory(IntPtr destination, IntPtr source, IntPtr length);
         private void MapVertexData()
         {
-            //RemakeVBuffer();
+            RemakeVBuffer();
             var gc = GCHandle.Alloc(((App)Application.Current).DrawManager.VertexData, GCHandleType.Pinned);
             var vertexData = new D3D11_SUBRESOURCE_DATA();
             var data_size = ((App)Application.Current).DrawManager.VertexData.SizeOf(); // for debug
