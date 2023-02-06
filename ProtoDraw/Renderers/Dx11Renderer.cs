@@ -7,6 +7,7 @@ using System;
 using System.IO;        // for Path.Combine
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 using WinRT;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -34,12 +35,8 @@ namespace DirectNXAML.Renderers
         private IComObject<ID3D11InputLayout> _inputLayout;
         private IComObject<ID3D11VertexShader> _vertexShader;
         private IComObject<ID3D11PixelShader> _pixelShader;
-        private IComObject<ID3D11DepthStencilState> _depthStencilState;
+        //private IComObject<ID3D11DepthStencilState> _depthStencilState;
         private IComObject<ID3D11ShaderResourceView> _shaderResourceView;
-
-        private XMFLOAT3 _modelRotation = new(0, 0, 0);
-        private XMFLOAT3 _modelScale = new(400, 400, 400);
-        private XMFLOAT3 _modelTranslation = new(0, 0, 1500);
 
         private float m_width;
         private float m_height;
@@ -106,7 +103,7 @@ namespace DirectNXAML.Renderers
             if (!_inputLayout.IsDisposed) _inputLayout.Dispose();
             if (!_vertexShader.IsDisposed) _vertexShader.Dispose();
             if (!_pixelShader.IsDisposed) _pixelShader.Dispose();
-            if ((_depthStencilState != null) && !_depthStencilState.IsDisposed) _depthStencilState.Dispose();
+            //if ((_depthStencilState != null) && !_depthStencilState.IsDisposed) _depthStencilState.Dispose();
             if ((_shaderResourceView != null) && !_shaderResourceView.IsDisposed) _shaderResourceView.Dispose();
 
         }
@@ -141,6 +138,7 @@ namespace DirectNXAML.Renderers
 
                 _swapChain = fac.CreateSwapChainForComposition<IDXGISwapChain1>(_dxgiDevice, desc);
 
+                
                 var frameBuffer = _swapChain.GetBuffer<ID3D11Texture2D>(0);
                 _renderTargetView = _device.CreateRenderTargetView(frameBuffer);
 
@@ -179,11 +177,12 @@ namespace DirectNXAML.Renderers
                 var psBlob = D3D11Functions.D3DCompileFromFile(path, "ps_main", "ps_5_0");
                 _pixelShader = _device.CreatePixelShader(psBlob);
 
-                var depthStencilDesc = new D3D11_DEPTH_STENCIL_DESC();
+                /*var depthStencilDesc = new D3D11_DEPTH_STENCIL_DESC();
                 depthStencilDesc.DepthEnable = true;
                 depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK.D3D11_DEPTH_WRITE_MASK_ALL;
                 depthStencilDesc.DepthFunc = D3D11_COMPARISON_FUNC.D3D11_COMPARISON_LESS;
                 _depthStencilState = _device.CreateDepthStencilState(depthStencilDesc);
+                //*/
 
                 var constantBufferDesc = new D3D11_BUFFER_DESC();
                 constantBufferDesc.ByteWidth = (uint)Marshal.SizeOf<VS_CONSTANT_BUFFER>();
@@ -200,9 +199,10 @@ namespace DirectNXAML.Renderers
                 var gc = GCHandle.Alloc(((App)Application.Current).DrawManager.VertexData, GCHandleType.Pinned);
                 var vertexBufferDesc = new D3D11_BUFFER_DESC();
 
-                // initiali data contains 6 vertecies.
-                // 2358 = 14148 vertecies(x6) = 169776byte (x12) limit of 8GB Intel Celeron J4125?
-                vertexBufferDesc.ByteWidth = (uint)((App)Application.Current).DrawManager.VertexData.SizeOf();// * 2358;
+                // consider to use static buffer if it short memory.
+                vertexBufferDesc.ByteWidth = (uint)((App)Application.Current).DrawManager.VertexData.SizeOf() + 144;
+                // 2358 = 14148 vertecies(x6) = 169776byte (x12) limit of Intel Celeron J4125
+                //vertexBufferDesc.ByteWidth = (uint)((App)Application.Current).DrawManager.VertexData.SizeOf() * 2358;
                 vertexBufferDesc.Usage = D3D11_USAGE.D3D11_USAGE_DYNAMIC;
                 vertexBufferDesc.BindFlags = (uint)D3D11_BIND_FLAG.D3D11_BIND_VERTEX_BUFFER;
                 vertexBufferDesc.CPUAccessFlags = (uint)D3D11_CPU_ACCESS_FLAG.D3D11_CPU_ACCESS_WRITE;
@@ -305,36 +305,50 @@ namespace DirectNXAML.Renderers
         }
         #endregion
 
-        public void SetBGColor(float R, float G, float B, float A = 1.0f)
+        public void SetBGColor(float _r, float _g, float _b, float _a = 1.0f)
         {
             StopRendering();
             lock (m_CriticalLock)
             {
-                RenderBackgroundColor[0] = R;
-                RenderBackgroundColor[1] = G;
-                RenderBackgroundColor[2] = B;
-                RenderBackgroundColor[3] = A;
+                RenderBackgroundColor[0] = _r;
+                RenderBackgroundColor[1] = _g;
+                RenderBackgroundColor[2] = _b;
+                RenderBackgroundColor[3] = _a;
             }
             StartRendering();
         }
 
         #region Rendering
-
-        D2D_MATRIX_4X4_F m_transform;
-        D2D_MATRIX_4X4_F m_projection;
-        public D2D_MATRIX_4X4_F Transform { get=>m_transform; set => m_transform = value; }
+        private D2D_MATRIX_4X4_F m_transform, m_projection;
+        public D2D_MATRIX_4X4_F Transform { get => m_transform; set => m_transform = value; }
         public D2D_MATRIX_4X4_F Projection { get => m_projection; set => m_projection = value; }
-        
+
+        private Vector3 _modelRotation = new(0, 0, 0);
+        private Vector3 _modelScale = new(400, 400, 400);
+        private Vector3 _modelTranslation = new(0, 0, 1500);
+
+        // other way to make Projection matrix
+        private Vector3 m_eyePosition = new(0, 0, 1500);   // view point
+        private Vector3 m_forcusPosition = new(0, 0, 0);
+        private Vector3 m_upDirection = new(0, 1, 0);
+        public Vector3 EyePosition { get => m_eyePosition; set => m_eyePosition = value; }
+        public Vector3 ForcusPosition { get => m_forcusPosition; set => m_forcusPosition = value; }
+        public Vector3 UpDirection { get => m_upDirection; set => m_upDirection = value; }
+
         public bool Render()
         {
             lock (m_CriticalLock)
             {
                 // these are substantially constant
-                var rotateX = D2D_MATRIX_4X4_F.RotationX(_modelRotation.x);
-                var rotateY = D2D_MATRIX_4X4_F.RotationY(_modelRotation.y);
-                var rotateZ = D2D_MATRIX_4X4_F.RotationZ(_modelRotation.z);
-                var scale = D2D_MATRIX_4X4_F.Scale(_modelScale.x, _modelScale.y, _modelScale.z);
-                var translate = D2D_MATRIX_4X4_F.Translation(_modelTranslation.x, _modelTranslation.y, _modelTranslation.z);
+                var rotateX = D2D_MATRIX_4X4_F.RotationX(_modelRotation.X);
+                var rotateY = D2D_MATRIX_4X4_F.RotationY(_modelRotation.Y);
+                var rotateZ = D2D_MATRIX_4X4_F.RotationZ(_modelRotation.Z);
+                var scale = D2D_MATRIX_4X4_F.Scale(_modelScale.X, _modelScale.Y, _modelScale.Z);
+                var translate = D2D_MATRIX_4X4_F.Translation(_modelTranslation.X, _modelTranslation.Y, _modelTranslation.Z);
+                
+                m_transform = rotateX * rotateY * rotateZ * scale * translate;
+                m_projection = new D2D_MATRIX_4X4_F((2 * m_nearZ) / m_width, 0, 0, 0, 0, (2 * m_nearZ) / m_height, 0, 0, 0, 0, m_farZ / (m_farZ - m_nearZ), 1, 0, 0, (m_nearZ * m_farZ) / (m_nearZ - m_farZ), 0);
+                //var projectionRH = XMMatrixLookAtRH(m_eyePosition, m_forcusPosition, m_upDirection);
 
                 m_transform = rotateX * rotateY * rotateZ * scale * translate;
                 m_projection= new D2D_MATRIX_4X4_F((2 * m_nearZ) / m_width, 0, 0, 0, 0, (2 * m_nearZ) / m_height, 0, 0, 0, 0, m_farZ / (m_farZ - m_nearZ), 1, 0, 0, (m_nearZ * m_farZ) / (m_nearZ - m_farZ), 0); ;
@@ -342,10 +356,7 @@ namespace DirectNXAML.Renderers
                 void mapAction(ref D3D11_MAPPED_SUBRESOURCE mapped, ref VS_CONSTANT_BUFFER buffer)
                 {
                     buffer.Transform = m_transform;
-                    //buffer.Transform = rotateX * rotateY * rotateZ * scale * translate;
                     buffer.Projection = m_projection;
-                    //buffer.Projection = new D2D_MATRIX_4X4_F((2 * m_nearZ) / m_width, 0, 0, 0, 0, (2 * m_nearZ) / m_height, 0, 0, 0, 0, m_farZ / (m_farZ - m_nearZ), 1, 0, 0, (m_nearZ * m_farZ) / (m_nearZ - m_farZ), 0);
-
                     buffer.LightVector = new XMFLOAT3(0, 0, 1);
                 }
 
@@ -375,7 +386,7 @@ namespace DirectNXAML.Renderers
                 _deviceContext.Object.PSSetShaderResources(0, 1, new ID3D11ShaderResourceView[] { _shaderResourceView.Object });
 
                 _deviceContext.Object.OMSetRenderTargets(1, new ID3D11RenderTargetView[] { _renderTargetView.Object }, _depthStencilView.Object);
-                _deviceContext.Object.OMSetDepthStencilState(_depthStencilState.Object, 0);
+                //_deviceContext.Object.OMSetDepthStencilState(_depthStencilState.Object, 0);
 
                 _deviceContext.Object.Draw((uint)((App)Application.Current).DrawManager.VertexData.Length/2, 0u);
             }
@@ -402,7 +413,7 @@ namespace DirectNXAML.Renderers
             RemakeVBuffer();
             
             uint new_vbuffer_size = (uint)((App)Application.Current).DrawManager.VertexData.SizeOf();
-            if (new_vbuffer_size > m_previous_v_buffersize)
+            if ((new_vbuffer_size > m_previous_v_buffersize) || (new_vbuffer_size < (m_previous_v_buffersize - 288)))
             {
                 m_previous_v_buffersize = new_vbuffer_size + 144;   // +144: to reduce remake time
                 RemakeVBuffer(m_previous_v_buffersize);

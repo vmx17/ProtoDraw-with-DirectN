@@ -10,7 +10,7 @@ This program was made to [ask](https://github.com/smourier/DirectN/issues/32) ab
 2. Invoke in Debug mode. If you hit trouble, please check the `Shader.hlsl` is copied to correct location and the code is in ASCII.
 3. select "Dx11Renderer" page in navigation menu located in left pane.
 4. There should be appeared triangle. This is initial data in vertex array. (primitive is "Line list", not Triangle)
-5. (Don't forget to) ***Push [Draw Line]*** button on right pane. It start 'line add' state machine. To stop it, push [Select] button.
+5. (Don't forget to) ***Push [Draw Line]*** button on right pane. It starts tiny 'line add' state machine. To stop it, push [Select] button.
 6. In "line add" state machine, every mouse_press adds some vertex data (in float). The count of data is on right pane.
 7. It should add a line (means two vertecies) every "Mouse_Press - Mouse_Move- Mouse_Release" events. Blue line shows it as rubber band and fixed line is in white.
 
