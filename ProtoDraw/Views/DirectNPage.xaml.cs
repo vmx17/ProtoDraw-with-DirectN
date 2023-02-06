@@ -96,8 +96,6 @@ namespace DirectNXAML.Views
             if (m_can_get_point)
             {
                 viewModel.LocalPointerPoint = e.GetCurrentPoint(sender as SwapChainPanel).Position;
-                viewModel.NormalizedPointerX = viewModel.LocalPointerPoint.X / viewModel.ActualWidth;
-                viewModel.NormalizedPointerY = viewModel.LocalPointerPoint.Y / viewModel.ActualHeight;
             }
             viewModel.ShaderPanel_PointerMovedCommand.Execute(e);
         }
@@ -106,10 +104,7 @@ namespace DirectNXAML.Views
         {
             if (m_can_get_point)
             {
-                viewModel.NormalizedPressedPoint = e.GetCurrentPoint(sender as SwapChainPanel).Position;
-                viewModel.NormalizedPressedX = viewModel.NormalizedPressedPoint.X / viewModel.ActualWidth;
-                viewModel.NormalizedPressedY = viewModel.NormalizedPressedPoint.Y / viewModel.ActualHeight;
-                viewModel.NormalizedPressedZ = Primitive.Fz;
+                viewModel.PressedPoint = e.GetCurrentPoint(sender as SwapChainPanel).Position;
             }
             viewModel.ShaderPanel_PointerPressedCommand.Execute(e);
         }
@@ -118,10 +113,7 @@ namespace DirectNXAML.Views
         {
             if (m_can_get_point)
             {
-                viewModel.NormalizedReleasedPoint = e.GetCurrentPoint(sender as SwapChainPanel).Position;
-                viewModel.NormalizedReleasedX = viewModel.NormalizedReleasedPoint.X / viewModel.ActualWidth;
-                viewModel.NormalizedReleasedY = viewModel.NormalizedReleasedPoint.Y / viewModel.ActualHeight;
-                viewModel.NormalizedReleasedZ = 0.0;
+                viewModel.ReleasedPoint = e.GetCurrentPoint(sender as SwapChainPanel).Position;
             }
             viewModel.ShaderPanel_PointerReleasedCommand.Execute(e);
         }

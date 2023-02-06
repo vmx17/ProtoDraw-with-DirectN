@@ -8,9 +8,7 @@
 	mc:Ignorable="d"
 	Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-	<Grid>
-		<StackPanel x:Name="stackpanel" Spacing="10" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <TextBlock Text="This page is empty." HorizontalAlignment="Center" VerticalAlignment="Center"/>
-        </StackPanel>
-	</Grid>
+    <StackPanel x:Name="stackpanel" Spacing="10" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <TextBlock Text="This page is empty." HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    </StackPanel>
 </Page>

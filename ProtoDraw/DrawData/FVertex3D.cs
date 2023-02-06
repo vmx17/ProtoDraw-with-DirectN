@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Numerics;
 using System.Linq;
+using ABI.Windows.Foundation;
 
 namespace DirectNXAML.DrawData
 {
@@ -29,6 +30,14 @@ namespace DirectNXAML.DrawData
         public FVertex3D(in FVertex3D _p) : this()
         {
             m_c.pos = _p.Pos;
+        }
+        public FVertex3D(in Windows.Foundation.Point _p, float _r = 1.0f, float _g = 1.0f, float _b = 1.0f) : this()
+        {
+            m_c.pos.X = (float)_p.X;
+            m_c.pos.Y = (float)_p.Y;
+            m_c.col.X = _r;
+            m_c.col.Y = _g;
+            m_c.col.Z = _b;
         }
         // at least, two float should be specified.
         public FVertex3D(float _x, float _y, float _r = 1.0f, float _g = 1.0f, float _b = 1.0f) : this()
@@ -115,6 +124,7 @@ namespace DirectNXAML.DrawData
             m_c.col = _c;
         }
         public override int ByteSize { get => sizeof(float) * Stride; }
+
         public override float[] ToFloatArray()
         {
             // here it makes float[12]
