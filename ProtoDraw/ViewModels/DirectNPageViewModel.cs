@@ -59,6 +59,7 @@ namespace DirectNXAML.ViewModels
             m_renderer.StopRendering();
         }
 
+        #region line draw state machine
         internal RoutedEventHandler SetState_DrawLineCommand { get; private set; }
         private void SetState_DrawLine(object sender, RoutedEventArgs e)
 		{
@@ -82,7 +83,6 @@ namespace DirectNXAML.ViewModels
         }
 
         // for just a test drawing
-        double m_cx, m_cy;      // center of current screen
         double m_nowX, m_nowY;  // position on local screen
         MathNet.Numerics.LinearAlgebra.Matrix<Single> m_projection, m_inversedProjection;
         public ICommand ShaderPanel_PointerMovedCommand { get; private set; }
@@ -95,13 +95,13 @@ namespace DirectNXAML.ViewModels
             // should elevate to Model layer
             if (m_state == ELineGetState.Pressed)
             {
-                m_nowX = m_normalized_local_point.X - 0.5; m_nowY = 0.5 - m_normalized_local_point.Y;
+                m_nowX = m_normalized_local_point.X - 0.5f; m_nowY = 0.5f - m_normalized_local_point.Y;
                 // projection
                 var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
 
                 ((App)Application.Current).DrawManager.DelLastLine();
-                m_lin.Ep.X = (float)m_nowX;
-                m_lin.Ep.Y = (float)m_nowY;
+                m_lin.Ep.X = (float)a.X;
+                m_lin.Ep.Y = (float)a.Y;
                 ((App)Application.Current).DrawManager.Add(m_lin);
                 SetLineText();
                 m_renderer.UpdateVertexBuffer();
@@ -118,20 +118,21 @@ namespace DirectNXAML.ViewModels
             {
                 ColorData.SetLine(ColorData.RubberLine);
 
-                m_cx = ActualWidth / 2; m_cy = ActualHeight / 2;
                 // 2d translate
                 m_nowX = m_normalized_pressed_point.X - 0.5; m_nowY = 0.5 - m_normalized_pressed_point.Y;
+                var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
                 // projection
-                var a = m_renderer.Projection.ToArray();
+                var arr = m_renderer.Projection.ToArray();
                 var M = Matrix<float>.Build;
-                m_inversedProjection = M.Dense(4, 4, a).Inverse();
+                m_inversedProjection = M.Dense(4, 4, arr).Inverse();
                 float[] b = { (float)m_nowX, (float)m_nowY, 0.0f, 1.0f };
                 var V = MathNet.Numerics.LinearAlgebra.Vector<float>.Build;
                 var x = m_inversedProjection * V.Dense(b);
 
                 m_lin = new FLine3D();
-                m_lin.Sp.X = m_lin.Ep.X = x[0];
-                m_lin.Sp.Y = m_lin.Ep.Y = a[1];
+                m_lin.Sp.X = m_lin.Ep.X = a.X;
+                m_lin.Sp.Y = m_lin.Ep.Y = a.Y;
+
                 m_lin.SetCol(ColorData.Line);   // blue rubber
                 ((App)Application.Current).DrawManager.Add(m_lin);
                 SetLineText();
@@ -153,13 +154,13 @@ namespace DirectNXAML.ViewModels
             {
                 ColorData.SetLine(ColorData.FixedLine);
 
-                m_nowX = m_normalized_released_point.X - 0.5; m_nowY = 0.5 - m_normalized_released_point.Y;
+                m_nowX = m_normalized_released_point.X - 0.5f; m_nowY = 0.5f - m_normalized_released_point.Y;
                 // projection
                 var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
 
                 ((App)Application.Current).DrawManager.DelLastLine();
-                m_lin.Ep.X = (float)m_nowX;
-                m_lin.Ep.Y = (float)m_nowY;
+                m_lin.Ep.X = (float)a.X;
+                m_lin.Ep.Y = (float)a.Y;
                 m_lin.SetCol(ColorData.Line); // white : Rocked
                 ((App)Application.Current).DrawManager.Add(m_lin);
                 SetLineText();
@@ -168,9 +169,9 @@ namespace DirectNXAML.ViewModels
                 SetStateName();
             }
         }
+        #endregion
 
         #region for display
-
         int m_vertex_count = 0;
         private string m_vertex_count_text = "Vertecies: ";
         internal string VertexCountText { get => m_vertex_count_text; set => SetProperty(ref m_vertex_count_text, value); }
