@@ -7,7 +7,7 @@ using System;
 using System.IO;        // for Path.Combine
 using System.Numerics;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography.X509Certificates;
+using Windows.UI;
 using WinRT;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -139,8 +139,9 @@ namespace DirectNXAML.Renderers
                 _renderTargetView = _device.CreateRenderTargetView(frameBuffer);
 
                 frameBuffer.Object.GetDesc(out var depthBufferDesc);
-                m_width = depthBufferDesc.Width;    // meanless
+                m_width = depthBufferDesc.Width;
                 m_height = depthBufferDesc.Height;
+                m_aspectRatio = m_width / m_height; // not used
                 depthBufferDesc.Format = DXGI_FORMAT.DXGI_FORMAT_D24_UNORM_S8_UINT;
                 depthBufferDesc.BindFlags = (uint)D3D11_BIND_FLAG.D3D11_BIND_DEPTH_STENCIL;
                 var depthBuffer = _device.CreateTexture2D<ID3D11Texture2D>(depthBufferDesc);
@@ -250,7 +251,7 @@ namespace DirectNXAML.Renderers
 
             var nativepanel = panel.As<ISwapChainPanelNative>();
             nativepanel.SetSwapChain(_swapChain.Object);
-            panel.SizeChanged += Panel_SizeChanged;
+            //panel.SizeChanged += Panel_SizeChanged;
             m_swapChainPanel = panel;
         }
         #endregion
@@ -267,7 +268,7 @@ namespace DirectNXAML.Renderers
             }
         }
 
-        private void CreateSizeDependentResources(Windows.Foundation.Size NewSize)
+        private void CreateSizeDependentResources(Windows.Foundation.Size _newSize)
         {
             lock (m_CriticalLock)
             {
@@ -277,7 +278,8 @@ namespace DirectNXAML.Renderers
                 _renderTargetView.Dispose();
                 _renderTargetView = null;
 
-                _swapChain.Object.ResizeBuffers(2, (uint)NewSize.Width, (uint)NewSize.Height, DXGI_FORMAT.DXGI_FORMAT_B8G8R8A8_UNORM, 0);
+                m_aspectRatio = (float)(_newSize.Width / _newSize.Height);
+                _swapChain.Object.ResizeBuffers(2, (uint)_newSize.Width, (uint)_newSize.Height, DXGI_FORMAT.DXGI_FORMAT_B8G8R8A8_UNORM, 0);
 
                 _deviceContext.Object.GetDevice(out var _device);
                 var d3d11Device = new ComObject<ID3D11Device>(_device);
@@ -302,6 +304,7 @@ namespace DirectNXAML.Renderers
         #endregion
 
         #region Rendering
+
         private Vector3 m_modelRotation = new(0, 0, 0);
         private Vector3 m_modelScale = new(400, 400, 400);
         private Vector3 m_modelTranslation = new(0, 0, 1500);
@@ -319,7 +322,7 @@ namespace DirectNXAML.Renderers
                 
                 m_transform = rotateX * rotateY * rotateZ * scale * translate;
                 m_projection = new D2D_MATRIX_4X4_F((2 * m_nearZ) / m_width, 0, 0, 0, 0, (2 * m_nearZ) / m_height, 0, 0, 0, 0, m_farZ / (m_farZ - m_nearZ), 1, 0, 0, (m_nearZ * m_farZ) / (m_nearZ - m_farZ), 0);
-                //var projectionRH = XMMatrixLookAtRH(m_eyePosition, m_forcusPosition, m_upDirection);
+                //var projectionRH = XMMatrixLookAtRH(m_eyePosition, m_eyeDirection, m_upDirection);
 
                 m_transform = rotateX * rotateY * rotateZ * scale * translate;
                 m_projection= new D2D_MATRIX_4X4_F((2 * m_nearZ) / m_width, 0, 0, 0, 0, (2 * m_nearZ) / m_height, 0, 0, 0, 0, m_farZ / (m_farZ - m_nearZ), 1, 0, 0, (m_nearZ * m_farZ) / (m_nearZ - m_farZ), 0); ;
@@ -376,9 +379,6 @@ namespace DirectNXAML.Renderers
                 StartRendering();
             }
         }
-
-        [DllImport("kernel32", ExactSpelling = true, EntryPoint = "RtlMoveMemory")]
-        private static extern void CopyMemory(IntPtr destination, IntPtr source, IntPtr length);
         private void MapVertexData()
         {
             uint new_vbuffer_size = (uint)((App)Application.Current).DrawManager.VertexData.SizeOf();

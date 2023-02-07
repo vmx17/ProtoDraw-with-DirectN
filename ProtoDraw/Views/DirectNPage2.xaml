@@ -8,6 +8,7 @@
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 	mc:Ignorable="d"
 	Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+  
 	Loaded="DirectNPage_Loaded"
 	Unloaded="DirectNPage_Unloaded">
 	<Page.DataContext>
@@ -38,6 +39,7 @@
             <Button x:Name="LineSegmentModeBtn" Content="Draw Line" Click="{x:Bind viewModel.SetState_DrawLineCommand}"/>
             <Button x:Name="SelectModeBtn" Content="Select" Click="{x:Bind viewModel.SetState_SelectCommand}"/>
             <TextBlock x:Name="Vertecies" Text="{x:Bind viewModel.VertexCountText, Mode=OneWay}" />
+            <TextBlock x:Name="SCPSize" Text="{x:Bind viewModel.ActualSizeText, Mode=OneWay}" />
             <TextBlock x:Name="State" Text="{x:Bind viewModel.StateName, Mode=OneWay}" />
             <TextBlock x:Name="LocalSize" Text="{x:Bind viewModel.LocalSizeText, Mode=OneWay}" />
             <TextBlock x:Name="LocalPointer" Text="{x:Bind viewModel.LocalPointerText, Mode=OneWay}" />

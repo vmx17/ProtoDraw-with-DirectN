@@ -17,35 +17,31 @@ namespace DirectNXAML.Views
     /// </summary>
     public sealed partial class DirectNPage2 : Page
     {
-        //SwapChainPanel _scp = null;
-        WeakReference<Page> m_page = null;
-        WeakReference<SwapChainPanel> m_scp = null;
         public DirectNPage2()
         {
             this.InitializeComponent();
             this.NavigationCacheMode = NavigationCacheMode.Disabled;
 
-            m_page = new WeakReference<Page>(this);
-            m_scp = new WeakReference<SwapChainPanel>(_scp);
+            viewModel.ViewPage = new WeakReference<Page>(this);
+            viewModel.ViewSwapChainPanel = new WeakReference<SwapChainPanel>(_scp);
         }
 
         private void DirectNPage_Loaded(object sender, RoutedEventArgs e)
         {
             if (viewModel.PageRenderer != null)
             {
+                this.UpdateLayout();
                 try
                 {
-                    viewModel.PageRenderer.Initialize(800,800);
+                    viewModel.PageRenderer.Initialize((uint)_scp.ActualWidth, (uint)_scp.ActualHeight);
                 }
                 catch
                 {
                     throw new InvalidProgramException("Error at initializsizng renderer.");
                 }
                 viewModel.PageRenderer.SetSwapChainPanel(_scp);
+                viewModel.SCPSize_Changed += viewModel.PageRenderer.Panel_SizeChanged;
                 viewModel.PageRenderer.StartRendering();
-                this.HorizontalAlignment = HorizontalAlignment.Stretch;
-                this.VerticalAlignment = VerticalAlignment.Stretch;
-                this.UpdateLayout();
             }
             else
             {
