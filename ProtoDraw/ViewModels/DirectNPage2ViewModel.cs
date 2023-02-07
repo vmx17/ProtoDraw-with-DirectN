@@ -21,7 +21,7 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace DirectNXAML.ViewModels
 {
-    internal class DirectNPageViewModel : ObservableObject
+    internal class DirectNPage2ViewModel : ObservableObject
 	{
         /// <summary>
         /// the Renderer
@@ -47,9 +47,9 @@ namespace DirectNXAML.ViewModels
         /// <summary>
         /// Constructor
         /// </summary>
-        internal DirectNPageViewModel()
+        internal DirectNPage2ViewModel()
         {
-            m_renderer = new Dx11Renderer();
+            m_renderer = new Dx11Renderer2();
             //SCPSize_Changed += m_renderer.Panel_SizeChanged;
             SetState_DrawLineCommand += SetState_DrawLine;
             SetState_SelectCommand += SetState_Select;
@@ -95,6 +95,8 @@ namespace DirectNXAML.ViewModels
         }
 
         // for just a test drawing
+        double m_absX, m_absY;
+        double m_cx, m_cy;
         double m_nowX, m_nowY;  // position on local screen
         MathNet.Numerics.LinearAlgebra.Matrix<Single> m_projection, m_inversedProjection;
         public ICommand ShaderPanel_PointerMovedCommand { get; private set; }
@@ -107,13 +109,18 @@ namespace DirectNXAML.ViewModels
             // should elevate to Model layer
             if (m_state == ELineGetState.Pressed)
             {
-                m_nowX = m_normalized_local_point.X - 0.5f; m_nowY = 0.5f - m_normalized_local_point.Y;
+                // 2d translate (absolute: store data)
+                m_absX = m_local_point.X - m_cx + m_renderer.EyePosition.X;
+                m_absY = m_cy - m_local_point.Y + m_renderer.EyePosition.Y;
+                // current point (local: center origin)
+                m_nowX = m_absX - m_renderer.EyePosition.X;
+                m_nowY = m_absY - m_renderer.EyePosition.Y;
                 // projection
                 var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
 
                 ((App)Application.Current).DrawManager.DelLastLine();
-                m_lin.Ep.X = (float)a.X;
-                m_lin.Ep.Y = (float)a.Y;
+                m_lin.Ep.X = (float)m_absX;
+                m_lin.Ep.Y = (float)m_absY;
                 ((App)Application.Current).DrawManager.Add(m_lin);
                 SetLineText();
                 m_renderer.UpdateVertexBuffer();
@@ -139,8 +146,14 @@ namespace DirectNXAML.ViewModels
             {
                 ColorData.SetLine(ColorData.RubberLine);
 
-                // 2d translate
-                m_nowX = m_normalized_pressed_point.X - 0.5; m_nowY = 0.5 - m_normalized_pressed_point.Y;
+                m_cx = ActualWidth / 2; m_cy = ActualHeight / 2;
+                // 2d translate (absolute: store data)
+                m_absX = m_pressed_point.X - m_cx + m_renderer.EyePosition.X;
+                m_absY = m_cy - m_pressed_point.Y + m_renderer.EyePosition.Y;
+                // current point (local: center origin)
+                m_nowX = m_absX - m_renderer.EyePosition.X;
+                m_nowY = m_absY - m_renderer.EyePosition.Y;
+                // draw data
                 var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
                 // projection
                 var arr = m_renderer.Projection.ToArray();
@@ -151,8 +164,8 @@ namespace DirectNXAML.ViewModels
                 var x = m_inversedProjection * V.Dense(b);
 
                 m_lin = new FLine3D();
-                m_lin.Sp.X = m_lin.Ep.X = a.X;
-                m_lin.Sp.Y = m_lin.Ep.Y = a.Y;
+                m_lin.Sp.X = m_lin.Ep.X = (float)m_absX;
+                m_lin.Sp.Y = m_lin.Ep.Y = (float)m_absY;
 
                 m_lin.SetCol(ColorData.Line);   // blue rubber
                 ((App)Application.Current).DrawManager.Add(m_lin);
@@ -174,13 +187,15 @@ namespace DirectNXAML.ViewModels
             {
                 ColorData.SetLine(ColorData.FixedLine);
 
-                m_nowX = m_normalized_released_point.X - 0.5f; m_nowY = 0.5f - m_normalized_released_point.Y;
+                // 2d translate (absolute: store data)
+                m_absX = m_local_point.X - m_cx + m_renderer.EyePosition.X;
+                m_absY = m_cy - m_local_point.Y + m_renderer.EyePosition.Y;
                 // projection
                 var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
 
                 ((App)Application.Current).DrawManager.DelLastLine();
-                m_lin.Ep.X = (float)a.X;
-                m_lin.Ep.Y = (float)a.Y;
+                m_lin.Ep.X = (float)m_absX;
+                m_lin.Ep.Y = (float)m_absY;
                 m_lin.SetCol(ColorData.Line); // white : Rocked
                 ((App)Application.Current).DrawManager.Add(m_lin);
                 SetLineText();

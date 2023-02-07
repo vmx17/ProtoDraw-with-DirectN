@@ -15,9 +15,9 @@ namespace DirectNXAML.Views
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class DirectNPage : Page
+    public sealed partial class DirectNPage2 : Page
     {
-        public DirectNPage()
+        public DirectNPage2()
         {
             this.InitializeComponent();
             this.NavigationCacheMode = NavigationCacheMode.Disabled;
