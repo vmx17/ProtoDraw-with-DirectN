@@ -1,8 +1,10 @@
 ﻿using DirectN;
 using DirectNXAML.DrawData;
 using DirectNXAML.Model;
+using JeremyAnsel.DirectX.DXMath;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using System;
 using System.IO;        // for Path.Combine
 using System.Numerics;
@@ -17,8 +19,9 @@ using WinRT;
 
 namespace DirectNXAML.Renderers
 {
-    public class Dx11Renderer : RendererBase
+    public class Dx11Renderer2 : RendererBase
     {
+
         private SwapChainPanel m_swapChainPanel = null;
         private IComObject<IDXGIDevice1> _dxgiDevice;
         private IComObject<ID3D11Device> _device;
@@ -41,13 +44,13 @@ namespace DirectNXAML.Renderers
         private float m_nearZ = 1000.0f;
         private float m_farZ = 1000000.0f;
 
-        float[] m_renderBackgroundColor = new float[] { 0.025f, 0.025f, 0.025f, 1 };
+        float[] RenderBackgroundColor = new float[] { 0.025f, 0.025f, 0.025f, 1 };
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="_beginToStart"></param>
-        public Dx11Renderer(bool _beginToStart = false) : base()
+        public Dx11Renderer2(bool _beginToStart = false) : base()
         {
             if (_beginToStart)
             {
@@ -56,6 +59,7 @@ namespace DirectNXAML.Renderers
         }
         public override void Dispose()
         {
+            StopRendering();
             CleanUp();
         }
         public override void StartRendering()
@@ -77,7 +81,7 @@ namespace DirectNXAML.Renderers
         /// <summary>
         /// CleanUp
         /// </summary>
-        private void CleanUp()
+        public void CleanUp()
         {
             StopRendering();
             SetSwapChainPanel(null);
@@ -141,9 +145,10 @@ namespace DirectNXAML.Renderers
                 _renderTargetView = _device.CreateRenderTargetView(frameBuffer);
 
                 frameBuffer.Object.GetDesc(out var depthBufferDesc);
-                m_width = depthBufferDesc.Width;
+                m_width = depthBufferDesc.Width;    // meanless
                 m_height = depthBufferDesc.Height;
-                m_aspectRatio = m_width / m_height; // not used
+                m_aspectRatio = m_width / m_height;
+
                 depthBufferDesc.Format = DXGI_FORMAT.DXGI_FORMAT_D24_UNORM_S8_UINT;
                 depthBufferDesc.BindFlags = (uint)D3D11_BIND_FLAG.D3D11_BIND_DEPTH_STENCIL;
                 var depthBuffer = _device.CreateTexture2D<ID3D11Texture2D>(depthBufferDesc);
@@ -310,10 +315,10 @@ namespace DirectNXAML.Renderers
             StopRendering();
             lock (m_CriticalLock)
             {
-                m_renderBackgroundColor[0] = _r;
-                m_renderBackgroundColor[1] = _g;
-                m_renderBackgroundColor[2] = _b;
-                m_renderBackgroundColor[3] = _a;
+                RenderBackgroundColor[0] = _r;
+                RenderBackgroundColor[1] = _g;
+                RenderBackgroundColor[2] = _b;
+                RenderBackgroundColor[3] = _a;
             }
             StartRendering();
         }
@@ -321,7 +326,7 @@ namespace DirectNXAML.Renderers
         #region Rendering
 
         private Vector3 m_modelRotation = new(0, 0, 0);
-        private Vector3 m_modelScale = new(400, 400, 400);
+        private Vector3 m_modelScale = new(1, 1, 1);
         private Vector3 m_modelTranslation = new(0, 0, 1500);
 
         public override bool Render()
@@ -334,19 +339,27 @@ namespace DirectNXAML.Renderers
                 var rotateZ = D2D_MATRIX_4X4_F.RotationZ(m_modelRotation.Z);
                 var scale = D2D_MATRIX_4X4_F.Scale(m_modelScale.X, m_modelScale.Y, m_modelScale.Z);
                 var translate = D2D_MATRIX_4X4_F.Translation(m_modelTranslation.X, m_modelTranslation.Y, m_modelTranslation.Z);
+                JeremyAnsel.DirectX.DXMath.XMMatrix viewMat = XMMatrix.LookAtRH(EyePosition, EyeDirection, UpDirection);
+                JeremyAnsel.DirectX.DXMath.XMMatrix viewFov= XMMatrix.LookAtRH(EyePosition, ForcusPosition, UpDirection);
+                //Everything is rendered in a size relative to the object’s actual size, regardless of its distance from the camera.
+                //viewMat = XMMatrix.OrthographicLH(40, 20, 50, 100);
+
+                //Objects further from the camera appear to be smaller because the field of view encompasses a greater range further from the focal point.
+                //viewMat = XMMatrix.PerspectiveLH(40, 20, 50, 100);
+                JeremyAnsel.DirectX.DXMath.XMMatrix projMat = XMMatrix.PerspectiveFovRH(XMMath.PIDivTwo, m_aspectRatio, 1.0f, 1500f);
                 
-                m_transform = rotateX * rotateY * rotateZ * scale * translate;
-                m_projection = new D2D_MATRIX_4X4_F((2 * m_nearZ) / m_width, 0, 0, 0, 0, (2 * m_nearZ) / m_height, 0, 0, 0, 0, m_farZ / (m_farZ - m_nearZ), 1, 0, 0, (m_nearZ * m_farZ) / (m_nearZ - m_farZ), 0);
-                //var projectionRH = XMMatrixLookAtRH(m_eyePosition, m_eyeDirection, m_upDirection);
-
-                m_transform = rotateX * rotateY * rotateZ * scale * translate;
-                m_projection= new D2D_MATRIX_4X4_F((2 * m_nearZ) / m_width, 0, 0, 0, 0, (2 * m_nearZ) / m_height, 0, 0, 0, 0, m_farZ / (m_farZ - m_nearZ), 1, 0, 0, (m_nearZ * m_farZ) / (m_nearZ - m_farZ), 0); ;
-
+                var f = viewMat.ToArray();
+                m_transform = new D2D_MATRIX_4X4_F(f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7],
+                    f[8], f[9], f[10], f[11], f[12], f[13], f[14], f[15]);
+                //m_projection = new D2D_MATRIX_4X4_F((2 * m_nearZ) / m_width, 0, 0, 0, 0, (2 * m_nearZ) / m_height, 0, 0, 0, 0, m_farZ / (m_farZ - m_nearZ), 1, 0, 0, (m_nearZ * m_farZ) / (m_nearZ - m_farZ), 0);
+                f = projMat.ToArray();
+                m_projection = new D2D_MATRIX_4X4_F(f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7],
+                    f[8], f[9], f[10], f[11], f[12], f[13], f[14], f[15]);
                 void mapAction(ref D3D11_MAPPED_SUBRESOURCE mapped, ref VS_CONSTANT_BUFFER buffer)
                 {
                     buffer.Transform = m_transform;
                     buffer.Projection = m_projection;
-                    buffer.LightVector = new XMFLOAT3(0, 0, 1);
+                    buffer.LightVector = new XMFLOAT3(0, 0, 1500);
                 }
 
                 _deviceContext.WithMap<VS_CONSTANT_BUFFER>(_constantBuffer, 0, D3D11_MAP.D3D11_MAP_WRITE_DISCARD, mapAction);
@@ -354,7 +367,7 @@ namespace DirectNXAML.Renderers
                 uint stride = (uint)FVertex3D.Stride * sizeof(float); // vertex size (12 floats: Vector3 position, Vector3 normal, Vector2 texcoord, Vector4 color)
                 uint offset = 0;
 
-                _deviceContext.Object.ClearRenderTargetView(_renderTargetView.Object, m_renderBackgroundColor);
+                _deviceContext.Object.ClearRenderTargetView(_renderTargetView.Object, RenderBackgroundColor);
                 _deviceContext.Object.ClearDepthStencilView(_depthStencilView.Object, (uint)D3D11_CLEAR_FLAG.D3D11_CLEAR_DEPTH, 1, 0);
 
                 _deviceContext.Object.IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY.D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
@@ -394,6 +407,7 @@ namespace DirectNXAML.Renderers
                 StartRendering();
             }
         }
+
         private void MapVertexData()
         {
             uint new_vbuffer_size = (uint)((App)Application.Current).DrawManager.VertexData.SizeOf();
