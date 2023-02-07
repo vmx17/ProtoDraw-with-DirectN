@@ -20,9 +20,9 @@ using System.Drawing;
 
 namespace DirectNXAML.ViewModels
 {
-	internal class DirectNPageViewModel : ObservableObject
+	internal class DirectNPage2ViewModel : ObservableObject
 	{
-		Dx11Renderer m_renderer = null;
+		RendererBase m_renderer = null;
 		// for a simple line drawing state transition (should elevate to Model layer)
 		enum ELineGetState : int
 		{
@@ -34,14 +34,14 @@ namespace DirectNXAML.ViewModels
 		}
 		ELineGetState m_state = ELineGetState.none;
 		private FLine3D m_lin;
-		internal Dx11Renderer PageRenderer { get { return m_renderer; } set { m_renderer = value; } }
+		internal RendererBase PageRenderer { get { return m_renderer; } set { m_renderer = value; } }
 
 		/// <summary>
 		/// Constructor
 		/// </summary>
-		internal DirectNPageViewModel()
+		internal DirectNPage2ViewModel()
 		{
-			m_renderer = new Dx11Renderer();
+			m_renderer = new Dx11Renderer2();
 
 			SetState_DrawLineCommand += SetState_DrawLine;
 			SetState_SelectCommand += SetState_Select;
@@ -95,14 +95,13 @@ namespace DirectNXAML.ViewModels
 			// should elevate to Model layer
 			if (m_state == ELineGetState.Pressed)
 			{
-				m_nowX = m_normalized_local_point.X - 0.5f;
-				m_nowY = 0.5f - m_normalized_local_point.Y;
+				m_nowX = m_normalized_local_point.X - 0.5f; m_nowY = 0.5f - m_normalized_local_point.Y;
 				// projection
-				//var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
+				var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
 
 				((App)Application.Current).DrawManager.DelLastLine();
-				m_lin.Ep.X = (float)m_nowX;
-				m_lin.Ep.Y = (float)m_nowY;
+				m_lin.Ep.X = (float)a.X;
+				m_lin.Ep.Y = (float)a.Y;
 				((App)Application.Current).DrawManager.Add(m_lin);
 				SetLineText();
 				m_renderer.UpdateVertexBuffer();
@@ -120,9 +119,7 @@ namespace DirectNXAML.ViewModels
 				ColorData.SetLine(ColorData.RubberLine);
 
 				// 2d translate: origin is center of screen (0.5,0.5)
-				m_nowX = m_normalized_pressed_point.X - 0.5;
-				m_nowY = 0.5 - m_normalized_pressed_point.Y;
-				/*
+				m_nowX = m_normalized_pressed_point.X - 0.5; m_nowY = 0.5 - m_normalized_pressed_point.Y;
 				var b = MatrixVectorOperation.Multiply(m_renderer.Transform, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
                 var a = MatrixVectorOperation.Multiply(m_renderer.Projection, b);
                 // projection
@@ -132,11 +129,10 @@ namespace DirectNXAML.ViewModels
 				float[] v = { (float)m_nowX, (float)m_nowY, 0.0f, 1.0f };
 				var V = MathNet.Numerics.LinearAlgebra.Vector<float>.Build;
 				var x = m_inversedProjection * V.Dense(v);
-				//*/
 
 				m_lin = new FLine3D();
-				m_lin.Sp.X = m_lin.Ep.X = (float)m_nowX;
-				m_lin.Sp.Y = m_lin.Ep.Y = (float)m_nowY;
+				m_lin.Sp.X = m_lin.Ep.X = a.X;
+				m_lin.Sp.Y = m_lin.Ep.Y = a.Y;
 
 				m_lin.SetCol(ColorData.Line);   // blue rubber
 				((App)Application.Current).DrawManager.Add(m_lin);
@@ -159,14 +155,13 @@ namespace DirectNXAML.ViewModels
 			{
 				ColorData.SetLine(ColorData.FixedLine);
 
-				m_nowX = m_normalized_released_point.X - 0.5f;
-				m_nowY = 0.5f - m_normalized_released_point.Y;
+				m_nowX = m_normalized_released_point.X - 0.5f; m_nowY = 0.5f - m_normalized_released_point.Y;
 				// projection
-				//var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
+				var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
 
 				((App)Application.Current).DrawManager.DelLastLine();
-				m_lin.Ep.X = (float)m_nowX;
-				m_lin.Ep.Y = (float)m_nowY;
+				m_lin.Ep.X = (float)a.X;
+				m_lin.Ep.Y = (float)a.Y;
 				m_lin.SetCol(ColorData.Line); // white : Rocked
 				((App)Application.Current).DrawManager.Add(m_lin);
 				SetLineText();

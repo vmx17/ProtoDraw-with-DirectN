@@ -17,7 +17,7 @@ using WinRT;
 
 namespace DirectNXAML.Renderers
 {
-    public class Dx11Renderer : RendererBase
+    public class Dx11Renderer2 : RendererBase
     {
         private SwapChainPanel m_swapChainPanel = null;
         private IComObject<IDXGIDevice1> _dxgiDevice;
@@ -45,7 +45,7 @@ namespace DirectNXAML.Renderers
         /// Constructor
         /// </summary>
         /// <param name="_beginToStart"></param>
-        public Dx11Renderer(bool _beginToStart = false) : base()
+        public Dx11Renderer2(bool _beginToStart = false)
         {
             if (_beginToStart)
             {
@@ -376,9 +376,6 @@ namespace DirectNXAML.Renderers
                 StartRendering();
             }
         }
-
-        [DllImport("kernel32", ExactSpelling = true, EntryPoint = "RtlMoveMemory")]
-        private static extern void CopyMemory(IntPtr destination, IntPtr source, IntPtr length);
         private void MapVertexData()
         {
             uint new_vbuffer_size = (uint)((App)Application.Current).DrawManager.VertexData.SizeOf();
