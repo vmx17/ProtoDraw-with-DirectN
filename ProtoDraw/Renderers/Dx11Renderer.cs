@@ -7,7 +7,7 @@ using System;
 using System.IO;        // for Path.Combine
 using System.Numerics;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography.X509Certificates;
+using Windows.UI;
 using WinRT;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -305,6 +305,14 @@ namespace DirectNXAML.Renderers
         }
         #endregion
 
+        #region set background color
+        /// <summary>
+        /// Set Backgroud Color
+        /// </summary>
+        /// <param name="_r"></param>
+        /// <param name="_g"></param>
+        /// <param name="_b"></param>
+        /// <param name="_a"></param>
         public override void SetBGColor(float _r, float _g, float _b, float _a = 1.0f)
         {
             StopRendering();
@@ -317,6 +325,23 @@ namespace DirectNXAML.Renderers
             }
             StartRendering();
         }
+        /// <summary>
+        /// Set Backgroud Color
+        /// </summary>
+        /// <param name="_col"></param>
+        public void SetBGColor(Windows.UI.Color _col)
+        {
+            StopRendering();
+            lock (m_CriticalLock)
+            {
+                RenderBackgroundColor[0] = ((float)_col.R) / 256f;
+                RenderBackgroundColor[1] = ((float)_col.G) / 256f;
+                RenderBackgroundColor[2] = ((float)_col.B) / 256f;
+                RenderBackgroundColor[3] = ((float)_col.A) / 256f;
+            }
+            StartRendering();
+        }
+        #endregion
 
         #region Rendering
 
