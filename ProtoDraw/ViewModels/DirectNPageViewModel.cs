@@ -6,6 +6,8 @@ using DirectNXAML.Helpers;
 using DirectNXAML.Model;
 using DirectNXAML.Renderers;
 using JeremyAnsel.DirectX.DXMath;
+using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.LinearAlgebra.Single;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
@@ -57,12 +59,14 @@ namespace DirectNXAML.ViewModels
             m_renderer.StopRendering();
         }
 
+        #region line draw state machine
         internal RoutedEventHandler SetState_DrawLineCommand { get; private set; }
         private void SetState_DrawLine(object sender, RoutedEventArgs e)
 		{
             if (m_state == ELineGetState.none)
             {
                 m_state = ELineGetState.Begin;
+                SetStateName();
             }
         }
         internal RoutedEventHandler SetState_SelectCommand { get; private set; }
@@ -70,12 +74,17 @@ namespace DirectNXAML.ViewModels
         {
             // reset any state machine before here
 			m_state = ELineGetState.none;
+            SetStateName();
         }
         internal ICommand ShaderPanel_SizeChangedCommand { get; private set; }
         private void ShaderPanel_SizeChanged(SizeChangedEventArgs args)
         {
             SetLocalSizeText();
         }
+
+        // for just a test drawing
+        double m_nowX, m_nowY;  // position on local screen
+        MathNet.Numerics.LinearAlgebra.Matrix<Single> m_projection, m_inversedProjection;
         public ICommand ShaderPanel_PointerMovedCommand { get; private set; }
 		private void ShaderPanel_PointerMoved(PointerRoutedEventArgs args)
         {
@@ -83,12 +92,18 @@ namespace DirectNXAML.ViewModels
             SetNormalizedPointerPosition();
             args.Handled = true;
 
+            // should elevate to Model layer
             if (m_state == ELineGetState.Pressed)
             {
+                m_nowX = m_normalized_local_point.X - 0.5f; m_nowY = 0.5f - m_normalized_local_point.Y;
+                // projection
+                var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
+
                 ((App)Application.Current).DrawManager.DelLastLine();
-                m_lin.Ep.X = (float)NormalizedPointerPoint.X;
-                m_lin.Ep.Y = (float)NormalizedPointerPoint.Y;
+                m_lin.Ep.X = (float)a.X;
+                m_lin.Ep.Y = (float)a.Y;
                 ((App)Application.Current).DrawManager.Add(m_lin);
+                SetLineText();
                 m_renderer.UpdateVertexBuffer();
             }
         }
@@ -98,27 +113,35 @@ namespace DirectNXAML.ViewModels
             SetNormalizedPointerPressed();
             args.Handled = true;
 
+            // should elevate to Model layer
             if (m_state == ELineGetState.Begin)
             {
                 ColorData.SetLine(ColorData.RubberLine);
 
-                m_cx = ActualWidth / 2; m_cy = ActualHeight / 2;
-
-                var v = new Vector4(new FVertex3D(NormalizedPressedPoint).Pos, 1f);
-                var p = MatrixVectorOperation.Multiply(m_renderer.Transform, v);
-                XMMatrix mat = XMMatrix.Identity;
+                // 2d translate
+                m_nowX = m_normalized_pressed_point.X - 0.5; m_nowY = 0.5 - m_normalized_pressed_point.Y;
+                var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
+                // projection
+                var arr = m_renderer.Projection.ToArray();
+                var M = Matrix<float>.Build;
+                m_inversedProjection = M.Dense(4, 4, arr).Inverse();
+                float[] b = { (float)m_nowX, (float)m_nowY, 0.0f, 1.0f };
+                var V = MathNet.Numerics.LinearAlgebra.Vector<float>.Build;
+                var x = m_inversedProjection * V.Dense(b);
 
                 m_lin = new FLine3D();
-                m_lin.Sp.X = m_lin.Ep.X = (float)NormalizedPressedPoint.X;
-                m_lin.Sp.Y = m_lin.Ep.Y = (float)NormalizedPressedPoint.Y;
+                m_lin.Sp.X = m_lin.Ep.X = a.X;
+                m_lin.Sp.Y = m_lin.Ep.Y = a.Y;
+
                 m_lin.SetCol(ColorData.Line);   // blue rubber
                 ((App)Application.Current).DrawManager.Add(m_lin);
+                SetLineText();
                 UpdateVertexCountDisplay();
                 m_renderer.UpdateVertexBuffer();
                 m_state = ELineGetState.Pressed;
+                SetStateName();
             }
         }
-        double m_cx, m_cy;  // Center of the screen
 
 		internal ICommand ShaderPanel_PointerReleasedCommand { get; private set; }
 		private void ShaderPanel_PointerReleased(PointerRoutedEventArgs args)
@@ -126,22 +149,29 @@ namespace DirectNXAML.ViewModels
             SetNormalizedPointerReleased();
             args.Handled = true;
 
+            // should elevate to Model layer
             if (m_state == ELineGetState.Pressed)
             {
                 ColorData.SetLine(ColorData.FixedLine);
+
+                m_nowX = m_normalized_released_point.X - 0.5f; m_nowY = 0.5f - m_normalized_released_point.Y;
+                // projection
+                var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
+
                 ((App)Application.Current).DrawManager.DelLastLine();
-                m_lin.Ep.X = (float)NormalizedPointerPoint.X;
-                m_lin.Ep.Y = (float)NormalizedPointerPoint.Y;
+                m_lin.Ep.X = (float)a.X;
+                m_lin.Ep.Y = (float)a.Y;
                 m_lin.SetCol(ColorData.Line); // white : Rocked
                 ((App)Application.Current).DrawManager.Add(m_lin);
+                SetLineText();
                 m_renderer.UpdateVertexBuffer();
-                m_lin.Clear();
                 m_state = ELineGetState.Begin;
+                SetStateName();
             }
         }
+        #endregion
 
         #region for display
-
         int m_vertex_count = 0;
         private string m_vertex_count_text = "Vertecies: ";
         internal string VertexCountText { get => m_vertex_count_text; set => SetProperty(ref m_vertex_count_text, value); }
@@ -209,17 +239,41 @@ namespace DirectNXAML.ViewModels
             NormalizedPointerReleasedText = sb.ToString();
         }
 
-        string m_local_size_text = "Local Size:";
+        string m_local_size_text = "Local Size: ";
         internal string LocalSizeText { get => m_local_size_text; set => SetProperty(ref m_local_size_text, value); }
         private void SetLocalSizeText()
         {
-            StringBuilder sb = new StringBuilder("Local Size:(");
+            StringBuilder sb = new StringBuilder("Local Size: (");
             sb.Append(m_local_width.ToString("F3", CultureInfo.InvariantCulture))
                 .Append(", ")
                 .Append(m_local_height.ToString("F3", CultureInfo.InvariantCulture))
                 .Append(") ");
             LocalSizeText = sb.ToString();
             sb.Clear();
+        }
+
+        string m_drawing_line_text = "Line: ";
+        internal string LineText { get => m_drawing_line_text; set => SetProperty(ref m_drawing_line_text, value); }
+        private void SetLineText()
+        {
+            StringBuilder sb = new StringBuilder("Line: (");
+            sb.Append(m_lin.Sp.X.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(", ")
+                .Append(m_lin.Sp.Y.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(")-(")
+                .Append(m_lin.Ep.X.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(", ")
+                .Append(m_lin.Ep.Y.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(")");
+            LineText = sb.ToString();
+            sb.Clear();
+        }
+
+        string m_state_name = "State: none";
+        internal string StateName { get => m_state_name; set => SetProperty(ref m_state_name, value); }
+        private void SetStateName()
+        {
+            StateName = System.Enum.GetName(typeof(ELineGetState), m_state);
         }
         #endregion
 

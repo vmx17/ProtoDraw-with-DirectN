@@ -38,11 +38,13 @@
             <Button x:Name="LineSegmentModeBtn" Content="Draw Line" Click="{x:Bind viewModel.SetState_DrawLineCommand}"/>
             <Button x:Name="SelectModeBtn" Content="Select" Click="{x:Bind viewModel.SetState_SelectCommand}"/>
             <TextBlock x:Name="Vertecies" Text="{x:Bind viewModel.VertexCountText, Mode=OneWay}" />
+            <TextBlock x:Name="State" Text="{x:Bind viewModel.StateName, Mode=OneWay}" />
             <TextBlock x:Name="LocalSize" Text="{x:Bind viewModel.LocalSizeText, Mode=OneWay}" />
             <TextBlock x:Name="LocalPointer" Text="{x:Bind viewModel.LocalPointerText, Mode=OneWay}" />
             <TextBlock x:Name="NormalizedPointer" Text="{x:Bind viewModel.NormalizedPointerText, Mode=OneWay}" />
             <TextBlock x:Name="NormalizedPointerPressed" Text="{x:Bind viewModel.NormalizedPointerPressedText, Mode=OneWay}" />
             <TextBlock x:Name="NormalizedPointerReleased" Text="{x:Bind viewModel.NormalizedPointerReleasedText, Mode=OneWay}" />
+            <TextBlock x:Name="DrawLine" Text="{x:Bind viewModel.LineText, Mode=OneWay}" />
         </StackPanel>
 	</Grid>
 </Page>

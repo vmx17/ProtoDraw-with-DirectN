@@ -410,8 +410,6 @@ namespace DirectNXAML.Renderers
         private static extern void CopyMemory(IntPtr destination, IntPtr source, IntPtr length);
         private void MapVertexData()
         {
-            RemakeVBuffer();
-            
             uint new_vbuffer_size = (uint)((App)Application.Current).DrawManager.VertexData.SizeOf();
             if ((new_vbuffer_size > m_previous_v_buffersize) || (new_vbuffer_size < (m_previous_v_buffersize - 288)))
             {
