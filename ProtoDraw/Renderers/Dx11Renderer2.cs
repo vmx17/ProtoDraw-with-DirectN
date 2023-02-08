@@ -50,6 +50,7 @@ namespace DirectNXAML.Renderers
         /// <param name="_beginToStart"></param>
         public Dx11Renderer2(bool _beginToStart = false)
         {
+            ((App)Application.Current).DrawManager = new SimpleDrawLineManager();
             if (_beginToStart)
             {
                 Microsoft.UI.Xaml.Media.CompositionTarget.Rendering += CompositionTarget_Rendering;
