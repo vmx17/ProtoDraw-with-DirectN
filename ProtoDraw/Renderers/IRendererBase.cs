@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DirectNXAML.Renderers
 {
-    public interface IRenderBase
+    public interface IRendererBase
     {
         public abstract void Initialize(uint _width, uint _height);
         public abstract void StartRendering();

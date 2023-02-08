@@ -10,7 +10,7 @@ namespace DirectNXAML.DrawData
     /// </summary>
     public class FVertex3D : Primitive
     {
-        public new static readonly int Stride = 12;
+        public new const int Stride = 12;
         // inner struct: POD
         private struct CoreData
         {

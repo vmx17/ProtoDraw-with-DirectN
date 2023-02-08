@@ -49,6 +49,7 @@ namespace DirectNXAML.Renderers
         /// <param name="_beginToStart"></param>
         public Dx11Renderer(bool _beginToStart = false) : base()
         {
+            ((App)Application.Current).DrawManager = new SimpleDrawLineManager();
             if (_beginToStart)
             {
                 Microsoft.UI.Xaml.Media.CompositionTarget.Rendering += CompositionTarget_Rendering;
@@ -225,7 +226,7 @@ namespace DirectNXAML.Renderers
                 textureDesc.Usage = D3D11_USAGE.D3D11_USAGE_IMMUTABLE;
                 textureDesc.BindFlags = (uint)D3D11_BIND_FLAG.D3D11_BIND_SHADER_RESOURCE;
 
-                gc = GCHandle.Alloc(SimpleDrawLineManager.TextureData, GCHandleType.Pinned);
+                gc = GCHandle.Alloc(((App)Application.Current).DrawManager.TextureData, GCHandleType.Pinned);
                 var textureData = new D3D11_SUBRESOURCE_DATA();
                 textureData.pSysMem = gc.AddrOfPinnedObject();
                 textureData.SysMemPitch = 20 * 4; // 4 bytes per pixel
@@ -325,6 +326,7 @@ namespace DirectNXAML.Renderers
             }
             StartRendering();
         }
+
         /// <summary>
         /// Set Backgroud Color
         /// </summary>
@@ -334,10 +336,10 @@ namespace DirectNXAML.Renderers
             StopRendering();
             lock (m_CriticalLock)
             {
-                RenderBackgroundColor[0] = ((float)_col.R) / 256f;
-                RenderBackgroundColor[1] = ((float)_col.G) / 256f;
-                RenderBackgroundColor[2] = ((float)_col.B) / 256f;
-                RenderBackgroundColor[3] = ((float)_col.A) / 256f;
+                m_renderBackgroundColor[0] = ((float)_col.R) / 256f;
+                m_renderBackgroundColor[1] = ((float)_col.G) / 256f;
+                m_renderBackgroundColor[2] = ((float)_col.B) / 256f;
+                m_renderBackgroundColor[3] = ((float)_col.A) / 256f;
             }
             StartRendering();
         }
@@ -362,10 +364,6 @@ namespace DirectNXAML.Renderers
                 
                 m_transform = rotateX * rotateY * rotateZ * scale * translate;
                 m_projection = new D2D_MATRIX_4X4_F((2 * m_nearZ) / m_width, 0, 0, 0, 0, (2 * m_nearZ) / m_height, 0, 0, 0, 0, m_farZ / (m_farZ - m_nearZ), 1, 0, 0, (m_nearZ * m_farZ) / (m_nearZ - m_farZ), 0);
-                //var projectionRH = XMMatrixLookAtRH(m_eyePosition, m_eyeDirection, m_upDirection);
-
-                m_transform = rotateX * rotateY * rotateZ * scale * translate;
-                m_projection= new D2D_MATRIX_4X4_F((2 * m_nearZ) / m_width, 0, 0, 0, 0, (2 * m_nearZ) / m_height, 0, 0, 0, 0, m_farZ / (m_farZ - m_nearZ), 1, 0, 0, (m_nearZ * m_farZ) / (m_nearZ - m_farZ), 0); ;
 
                 void mapAction(ref D3D11_MAPPED_SUBRESOURCE mapped, ref VS_CONSTANT_BUFFER buffer)
                 {

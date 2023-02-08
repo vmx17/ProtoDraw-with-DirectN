@@ -15,7 +15,7 @@ namespace DirectNXAML
     /// </summary>
     public partial class App : Application
     {
-        public SimpleDrawLineManager DrawManager;
+        public DrawManagerBase DrawManager;
 
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
@@ -23,7 +23,6 @@ namespace DirectNXAML
         /// </summary>
         public App()
         {
-            DrawManager = new SimpleDrawLineManager();
             this.InitializeComponent();
         }
         IntPtr m_hwnd;

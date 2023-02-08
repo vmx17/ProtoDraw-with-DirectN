@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace DirectNXAML.Renderers
 {
-    public abstract class RendererBase : IRenderBase, IDisposable
+    public abstract class RendererBase : IRendererBase, IDisposable
     {
         protected object m_CriticalLock = new();
         protected RendererBase() {; }

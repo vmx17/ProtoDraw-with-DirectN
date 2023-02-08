@@ -112,29 +112,22 @@ namespace DirectNXAML.ViewModels
                 // 2d translate (absolute: store data)
                 m_absX = m_local_point.X - m_cx + m_renderer.EyePosition.X;
                 m_absY = m_cy - m_local_point.Y + m_renderer.EyePosition.Y;
+                SetWorldPositionText();
                 // current point (local: center origin)
                 m_nowX = m_absX - m_renderer.EyePosition.X;
                 m_nowY = m_absY - m_renderer.EyePosition.Y;
                 // projection
                 var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
 
-                ((App)Application.Current).DrawManager.DelLastLine();
+                ((App)Application.Current).DrawManager.DelLast();
                 m_lin.Ep.X = (float)m_absX;
                 m_lin.Ep.Y = (float)m_absY;
-                ((App)Application.Current).DrawManager.Add(m_lin);
+                ((App)Application.Current).DrawManager.AddLast(m_lin);
                 SetLineText();
                 m_renderer.UpdateVertexBuffer();
             }
         }
-        private void CancelLineDrawing()
-        {
-            if (m_state== ELineGetState.Pressed)
-            {
-                ((App)Application.Current).DrawManager.DelLastLine();
-                m_lin.Clear();
-                SetStateName(ELineGetState.none);
-            }
-        }
+
 		internal ICommand ShaderPanel_PointerPressedCommand { get; private set; }
 		private void ShaderPanel_PointerPressed(PointerRoutedEventArgs args)
         {
@@ -150,11 +143,11 @@ namespace DirectNXAML.ViewModels
                 // 2d translate (absolute: store data)
                 m_absX = m_pressed_point.X - m_cx + m_renderer.EyePosition.X;
                 m_absY = m_cy - m_pressed_point.Y + m_renderer.EyePosition.Y;
-                // current point (local: center origin)
-                m_nowX = m_absX - m_renderer.EyePosition.X;
-                m_nowY = m_absY - m_renderer.EyePosition.Y;
-                // draw data
-                var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
+                SetWorldPositionText();
+                var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_absX, (float)m_absY, 0.0f, 1.0f));
+                m_nowX = a.X;
+                m_nowY = a.Y;
+                SetProjectedPositionText();
                 // projection
                 var arr = m_renderer.Projection.ToArray();
                 var M = Matrix<float>.Build;
@@ -168,7 +161,7 @@ namespace DirectNXAML.ViewModels
                 m_lin.Sp.Y = m_lin.Ep.Y = (float)m_absY;
 
                 m_lin.SetCol(ColorData.Line);   // blue rubber
-                ((App)Application.Current).DrawManager.Add(m_lin);
+                ((App)Application.Current).DrawManager.AddLast(m_lin);
                 SetLineText();
                 UpdateVertexCountDisplay();
                 m_renderer.UpdateVertexBuffer();
@@ -190,17 +183,29 @@ namespace DirectNXAML.ViewModels
                 // 2d translate (absolute: store data)
                 m_absX = m_local_point.X - m_cx + m_renderer.EyePosition.X;
                 m_absY = m_cy - m_local_point.Y + m_renderer.EyePosition.Y;
+                SetWorldPositionText();
                 // projection
-                var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
+                var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_absX, (float)m_absY, 0.0f, 1.0f));
+                SetProjectedPositionText();
 
-                ((App)Application.Current).DrawManager.DelLastLine();
+                ((App)Application.Current).DrawManager.DelLast();
                 m_lin.Ep.X = (float)m_absX;
                 m_lin.Ep.Y = (float)m_absY;
                 m_lin.SetCol(ColorData.Line); // white : Rocked
-                ((App)Application.Current).DrawManager.Add(m_lin);
+                ((App)Application.Current).DrawManager.AddLast(m_lin);
                 SetLineText();
                 m_renderer.UpdateVertexBuffer();
                 SetStateName(ELineGetState.Begin);
+            }
+        }
+
+        private void CancelLineDrawing()
+        {
+            if (m_state == ELineGetState.Pressed)
+            {
+                ((App)Application.Current).DrawManager.DelLast();
+                m_lin.Clear();
+                SetStateName(ELineGetState.none);
             }
         }
         #endregion
@@ -321,6 +326,32 @@ namespace DirectNXAML.ViewModels
         {
             m_state = _s;
             StateName = "State: " + System.Enum.GetName(typeof(ELineGetState), m_state);
+        }
+
+        private string m_world_position_text = "World Position: ";
+        internal string WorldPositionText { get => m_world_position_text; set => SetProperty(ref m_world_position_text, value); }
+        private void SetWorldPositionText()
+        {
+            StringBuilder sb = new StringBuilder("World Position: (");
+            sb.Append(m_absX.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(", ")
+                .Append(m_absY.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(") ");
+            WorldPositionText = sb.ToString();
+            sb.Clear();
+        }
+
+        private string m_projected_position_text = "Projected Position: ";
+        internal string ProjectedPositionText { get => m_world_position_text; set => SetProperty(ref m_world_position_text, value); }
+        private void SetProjectedPositionText()
+        {
+            StringBuilder sb = new StringBuilder("Projected Position: (");
+            sb.Append(m_nowX.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(", ")
+                .Append(m_nowY.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(") ");
+            ProjectedPositionText = sb.ToString();
+            sb.Clear();
         }
         #endregion
 
