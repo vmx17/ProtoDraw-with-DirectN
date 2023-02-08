@@ -9,7 +9,7 @@
 
 	<NavigationView x:Name="MainNavView" ItemInvoked="NavigationView_ItemInvoked">
         <NavigationView.MenuItems>
-            <NavigationViewItem Icon="ProtectedDocument" Content="Dx11Renderer" Tag="DirectNPage1"/>
+            <NavigationViewItem Icon="ProtectedDocument" Content="Dx11Renderer" Tag="DirectNPage"/>
             <NavigationViewItem Icon="ProtectedDocument" Content="Dx11Renderer2" Tag="DirectNPage2"/>
             <NavigationViewItem Icon="Page2" Content="Other Page" Tag="OtherPage"/>
 		</NavigationView.MenuItems>
