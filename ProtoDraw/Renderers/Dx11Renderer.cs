@@ -47,6 +47,7 @@ namespace DirectNXAML.Renderers
         /// <param name="_beginToStart"></param>
         public Dx11Renderer(bool _beginToStart = false) : base()
         {
+            ((App)Application.Current).DrawManager = new SimpleDrawLineManager();
             if (_beginToStart)
             {
                 Microsoft.UI.Xaml.Media.CompositionTarget.Rendering += CompositionTarget_Rendering;
@@ -322,10 +323,6 @@ namespace DirectNXAML.Renderers
                 
                 m_transform = rotateX * rotateY * rotateZ * scale * translate;
                 m_projection = new D2D_MATRIX_4X4_F((2 * m_nearZ) / m_width, 0, 0, 0, 0, (2 * m_nearZ) / m_height, 0, 0, 0, 0, m_farZ / (m_farZ - m_nearZ), 1, 0, 0, (m_nearZ * m_farZ) / (m_nearZ - m_farZ), 0);
-                //var projectionRH = XMMatrixLookAtRH(m_eyePosition, m_eyeDirection, m_upDirection);
-
-                m_transform = rotateX * rotateY * rotateZ * scale * translate;
-                m_projection= new D2D_MATRIX_4X4_F((2 * m_nearZ) / m_width, 0, 0, 0, 0, (2 * m_nearZ) / m_height, 0, 0, 0, 0, m_farZ / (m_farZ - m_nearZ), 1, 0, 0, (m_nearZ * m_farZ) / (m_nearZ - m_farZ), 0); ;
 
                 void mapAction(ref D3D11_MAPPED_SUBRESOURCE mapped, ref VS_CONSTANT_BUFFER buffer)
                 {

@@ -30,11 +30,6 @@ namespace DirectNXAML.Views
                     ContentFrame.Navigate(typeof(DirectNPage2), null);
                 }
                 else
-                if ((string)(item.Tag) == "DirectNPage2")
-                {
-                    ContentFrame.Navigate(typeof(DirectNPage2), null);
-                }
-                else
                 {
                     ContentFrame.Navigate(typeof(OtherPage), null);
                 }

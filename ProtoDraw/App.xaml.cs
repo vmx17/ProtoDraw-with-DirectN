@@ -23,7 +23,6 @@ namespace DirectNXAML
         /// </summary>
         public App()
         {
-            DrawManager = new SimpleDrawLineManager();
             this.InitializeComponent();
         }
         IntPtr m_hwnd;
