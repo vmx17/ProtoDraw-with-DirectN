@@ -24,10 +24,35 @@ namespace DirectNXAML.Renderers
         public abstract void StopRendering();
         public abstract bool Render();
 
-        public abstract void SetSwapChainPanel(SwapChainPanel panel) ;
-        public abstract void Panel_SizeChanged(object sender, Microsoft.UI.Xaml.SizeChangedEventArgs e) ;
-        public abstract void SetBGColor(float _r, float _g, float _b, float _a = 1.0f) ;
+        public abstract void SetSwapChainPanel(SwapChainPanel panel);
+        public abstract void Panel_SizeChanged(object sender, Microsoft.UI.Xaml.SizeChangedEventArgs e);
 
+        protected float[] m_renderBackgroundColor = new float[] { 0.025f, 0.025f, 0.025f, 1 };
+        public virtual void SetBGColor(float _r, float _g, float _b, float _a = 1.0f)
+        {
+            StopRendering();
+            lock (m_CriticalLock)
+            {
+                m_renderBackgroundColor[0] = _r;
+                m_renderBackgroundColor[1] = _g;
+                m_renderBackgroundColor[2] = _b;
+                m_renderBackgroundColor[3] = _a;
+            }
+            StartRendering();
+        }
+
+        public void SetBGColor(Windows.UI.Color _col)
+        {
+            StopRendering();
+            lock (m_CriticalLock)
+            {
+                m_renderBackgroundColor[0] = ((float)_col.R) / 256f;
+                m_renderBackgroundColor[1] = ((float)_col.G) / 256f;
+                m_renderBackgroundColor[2] = ((float)_col.B) / 256f;
+                m_renderBackgroundColor[3] = ((float)_col.A) / 256f;
+            }
+            StartRendering();
+        }
 
         protected D2D_MATRIX_4X4_F m_transform, m_projection;
         public virtual D2D_MATRIX_4X4_F Transform { get => m_transform; set => m_transform = value; }
@@ -36,7 +61,7 @@ namespace DirectNXAML.Renderers
         protected float m_aspectRatio = 1.0f;
         protected XMVector m_eyePosition = new(0, 0, 1500, 1);  // view point
         protected XMVector m_eyeDirection = new(0, 0, 1, 1);    // target
-        protected XMVector m_forcusPosition = new(0, 0, 0, 1);    // target
+        protected XMVector m_forcusPosition = new(0, 0, 0, 1);  // target
         protected XMVector m_upDirection = new(0, 1, 0, 1);     // up
 
         public virtual float AspectRatio { get => m_aspectRatio; set => m_aspectRatio = value; }

@@ -5,6 +5,7 @@ using JeremyAnsel.DirectX.DXMath;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+
 using System;
 using System.IO;        // for Path.Combine
 using System.Numerics;
@@ -21,7 +22,6 @@ namespace DirectNXAML.Renderers
 {
     public class Dx11Renderer2 : RendererBase
     {
-
         private SwapChainPanel m_swapChainPanel = null;
         private IComObject<IDXGIDevice1> _dxgiDevice;
         private IComObject<ID3D11Device> _device;
@@ -44,15 +44,14 @@ namespace DirectNXAML.Renderers
         private float m_nearZ = 1000.0f;
         private float m_farZ = 1000000.0f;
 
-        float[] m_renderBackgroundColor = new float[] { 0.025f, 0.025f, 0.025f, 1 };
-
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="_beginToStart"></param>
-        public Dx11Renderer2(bool _beginToStart = false) : base()
+        public Dx11Renderer2(bool _beginToStart = false)
         {
             ((App)Application.Current).DrawManager = new DrawManager();
+
             if (_beginToStart)
             {
                 Microsoft.UI.Xaml.Media.CompositionTarget.Rendering += CompositionTarget_Rendering;
@@ -82,7 +81,7 @@ namespace DirectNXAML.Renderers
         /// <summary>
         /// CleanUp
         /// </summary>
-        public void CleanUp()
+        private void CleanUp()
         {
             StopRendering();
             SetSwapChainPanel(null);
@@ -148,8 +147,9 @@ namespace DirectNXAML.Renderers
                 frameBuffer.Object.GetDesc(out var depthBufferDesc);
                 m_width = depthBufferDesc.Width;    // meanless
                 m_height = depthBufferDesc.Height;
+                
                 m_aspectRatio = m_width / m_height;
-
+                
                 depthBufferDesc.Format = DXGI_FORMAT.DXGI_FORMAT_D24_UNORM_S8_UINT;
                 depthBufferDesc.BindFlags = (uint)D3D11_BIND_FLAG.D3D11_BIND_DEPTH_STENCIL;
                 var depthBuffer = _device.CreateTexture2D<ID3D11Texture2D>(depthBufferDesc);
@@ -259,6 +259,7 @@ namespace DirectNXAML.Renderers
 
             var nativepanel = panel.As<ISwapChainPanelNative>();
             nativepanel.SetSwapChain(_swapChain.Object);
+            
             //panel.SizeChanged += Panel_SizeChanged;
             m_swapChainPanel = panel;
         }
@@ -311,48 +312,9 @@ namespace DirectNXAML.Renderers
         }
         #endregion
 
-        #region set background color
-        /// <summary>
-        /// Set Backgroud Color
-        /// </summary>
-        /// <param name="_r"></param>
-        /// <param name="_g"></param>
-        /// <param name="_b"></param>
-        /// <param name="_a"></param>
-        public override void SetBGColor(float _r, float _g, float _b, float _a = 1.0f)
-        {
-            StopRendering();
-            lock (m_CriticalLock)
-            {
-                m_renderBackgroundColor[0] = _r;
-                m_renderBackgroundColor[1] = _g;
-                m_renderBackgroundColor[2] = _b;
-                m_renderBackgroundColor[3] = _a;
-            }
-            StartRendering();
-        }
-
-        /// <summary>
-        /// Set Backgroud Color
-        /// </summary>
-        /// <param name="_col"></param>
-        public void SetBGColor(Windows.UI.Color _col)
-        {
-            StopRendering();
-            lock (m_CriticalLock)
-            {
-                m_renderBackgroundColor[0] = ((float)_col.R) / 256f;
-                m_renderBackgroundColor[1] = ((float)_col.G) / 256f;
-                m_renderBackgroundColor[2] = ((float)_col.B) / 256f;
-                m_renderBackgroundColor[3] = ((float)_col.A) / 256f;
-            }
-            StartRendering();
-        }
-        #endregion
-
         #region Rendering
         private Vector3 m_modelRotation = new(0, 0, 0);
-        private Vector3 m_modelScale = new(1, 1, 1);
+        private Vector3 m_modelScale = new(400, 400, 400);
         private Vector3 m_modelTranslation = new(0, 0, 1500);
 
         public override bool Render()
@@ -386,9 +348,11 @@ namespace DirectNXAML.Renderers
                     f[8], f[9], f[10], f[11], f[12], f[13], f[14], f[15]);
                 //*/
                 //m_projection = new D2D_MATRIX_4X4_F((2 * m_nearZ) / m_width, 0, 0, 0, 0, (2 * m_nearZ) / m_height, 0, 0, 0, 0, m_farZ / (m_farZ - m_nearZ), 1, 0, 0, (m_nearZ * m_farZ) / (m_nearZ - m_farZ), 0);
+
                 var p = orthographic.ToArray();
                 m_projection = new D2D_MATRIX_4X4_F(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
                     p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15]);
+
                 void mapAction(ref D3D11_MAPPED_SUBRESOURCE mapped, ref VS_CONSTANT_BUFFER buffer)
                 {
                     buffer.Transform = m_transform;
@@ -403,7 +367,6 @@ namespace DirectNXAML.Renderers
 
                 _deviceContext.Object.ClearRenderTargetView(_renderTargetView.Object, m_renderBackgroundColor);
                 _deviceContext.Object.ClearDepthStencilView(_depthStencilView.Object, (uint)D3D11_CLEAR_FLAG.D3D11_CLEAR_DEPTH, 1, 0);
-
                 _deviceContext.Object.IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY.D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 
                 _deviceContext.Object.IASetInputLayout(_inputLayout.Object);

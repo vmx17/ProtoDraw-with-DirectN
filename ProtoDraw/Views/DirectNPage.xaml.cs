@@ -52,6 +52,7 @@ namespace DirectNXAML.Views
         private void DirectNPage_Unloaded(object sender, RoutedEventArgs e)
         {
             viewModel.PageRenderer.StopRendering();
+            viewModel.PageRenderer.SetSwapChainPanel(null);
         }
 
         private void SetBG_White(object sender, RoutedEventArgs e)
