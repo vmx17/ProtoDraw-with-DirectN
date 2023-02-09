@@ -50,7 +50,8 @@ namespace DirectNXAML.Renderers
         /// <param name="_beginToStart"></param>
         public Dx11Renderer2(bool _beginToStart = false)
         {
-            ((App)Application.Current).DrawManager = new SimpleDrawLineManager();
+            ((App)Application.Current).DrawManager = new DrawManager();
+
             if (_beginToStart)
             {
                 Microsoft.UI.Xaml.Media.CompositionTarget.Rendering += CompositionTarget_Rendering;
@@ -230,7 +231,7 @@ namespace DirectNXAML.Renderers
                 textureDesc.Usage = D3D11_USAGE.D3D11_USAGE_IMMUTABLE;
                 textureDesc.BindFlags = (uint)D3D11_BIND_FLAG.D3D11_BIND_SHADER_RESOURCE;
 
-                gc = GCHandle.Alloc(SimpleDrawLineManager.TextureData, GCHandleType.Pinned);
+                gc = GCHandle.Alloc(((App)Application.Current).DrawManager.TextureData, GCHandleType.Pinned);
                 var textureData = new D3D11_SUBRESOURCE_DATA();
                 textureData.pSysMem = gc.AddrOfPinnedObject();
                 textureData.SysMemPitch = 20 * 4; // 4 bytes per pixel
@@ -320,6 +321,7 @@ namespace DirectNXAML.Renderers
         {
             lock (m_CriticalLock)
             {
+                // transform matrix
                 // these are substantially constant
                 var rotateX = D2D_MATRIX_4X4_F.RotationX(m_modelRotation.X);
                 var rotateY = D2D_MATRIX_4X4_F.RotationY(m_modelRotation.Y);
@@ -327,6 +329,10 @@ namespace DirectNXAML.Renderers
                 var scale = D2D_MATRIX_4X4_F.Scale(m_modelScale.X, m_modelScale.Y, m_modelScale.Z);
                 var translate = D2D_MATRIX_4X4_F.Translation(m_modelTranslation.X, m_modelTranslation.Y, m_modelTranslation.Z);
 
+                m_transform = rotateX * rotateY * rotateZ * scale * translate;
+
+                // projection matrix
+                XMMatrix orthographic = XMMatrix.OrthographicLH(m_width, m_height, m_nearZ, m_farZ);
                 JeremyAnsel.DirectX.DXMath.XMMatrix viewMat = XMMatrix.LookAtRH(EyePosition, EyeDirection, UpDirection);
                 JeremyAnsel.DirectX.DXMath.XMMatrix viewFov= XMMatrix.LookAtRH(EyePosition, ForcusPosition, UpDirection);
                 //Everything is rendered in a size relative to the object’s actual size, regardless of its distance from the camera.
@@ -335,14 +341,17 @@ namespace DirectNXAML.Renderers
                 //Objects further from the camera appear to be smaller because the field of view encompasses a greater range further from the focal point.
                 //viewMat = XMMatrix.PerspectiveLH(40, 20, 50, 100);
                 JeremyAnsel.DirectX.DXMath.XMMatrix projMat = XMMatrix.PerspectiveFovRH(XMMath.PIDivTwo, m_aspectRatio, 1.0f, 1500f);
-                
+
+                /*
                 var f = viewMat.ToArray();
                 m_transform = new D2D_MATRIX_4X4_F(f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7],
                     f[8], f[9], f[10], f[11], f[12], f[13], f[14], f[15]);
+                //*/
                 //m_projection = new D2D_MATRIX_4X4_F((2 * m_nearZ) / m_width, 0, 0, 0, 0, (2 * m_nearZ) / m_height, 0, 0, 0, 0, m_farZ / (m_farZ - m_nearZ), 1, 0, 0, (m_nearZ * m_farZ) / (m_nearZ - m_farZ), 0);
-                f = projMat.ToArray();
-                m_projection = new D2D_MATRIX_4X4_F(f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7],
-                    f[8], f[9], f[10], f[11], f[12], f[13], f[14], f[15]);
+
+                var p = orthographic.ToArray();
+                m_projection = new D2D_MATRIX_4X4_F(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
+                    p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15]);
 
                 void mapAction(ref D3D11_MAPPED_SUBRESOURCE mapped, ref VS_CONSTANT_BUFFER buffer)
                 {

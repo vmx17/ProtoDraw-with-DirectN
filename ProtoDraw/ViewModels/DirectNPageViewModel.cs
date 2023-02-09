@@ -61,7 +61,7 @@ namespace DirectNXAML.ViewModels
 
             ColorData.ResetLineColor();
             UpdateVertexCountDisplay();
-            SetStateName(ELineGetState.none);  // initial mode.
+            SetState(ELineGetState.none);  // initial mode.
         }
         public void Dispose()
         {
@@ -86,56 +86,45 @@ namespace DirectNXAML.ViewModels
 		{
             if (m_state == ELineGetState.none)
             {
-                SetStateName(ELineGetState.Begin);
+                SetState(ELineGetState.Begin);
             }
         }
         internal RoutedEventHandler SetState_SelectCommand { get; private set; }
         private void SetState_Select(object sender, RoutedEventArgs e)
         {
             // reset any state machine before here
-            SetStateName(ELineGetState.none);
+            SetState(ELineGetState.none);
         }
 
-		// for just a test drawing
-		double m_nowX, m_nowY;  // position on local screen
-		MathNet.Numerics.LinearAlgebra.Matrix<Single> m_projection, m_inversedProjection;
-		
+        // for just a test drawing
+        double m_nowX, m_nowY;  // position on local screen
+        MathNet.Numerics.LinearAlgebra.Matrix<Single> m_projection, m_inversedProjection;
 		internal ICommand ShaderPanel_PointerPressedCommand { get; private set; }
 		private void ShaderPanel_PointerPressed(PointerRoutedEventArgs args)
+        {
+            SetNormalizedPointerPressed();
+            args.Handled = true;
+
+        internal ICommand ShaderPanel_PointerReleasedCommand { get; private set; }
+		private void ShaderPanel_PointerReleased(PointerRoutedEventArgs args)
 		{
-			SetNormalizedPointerPressed();
+			SetNormalizedPointerReleased();
 			args.Handled = true;
 
-			// should elevate to Model layer
-			if (m_state == ELineGetState.Begin)
-			{
-				ColorData.SetLine(ColorData.RubberLine);
+                // 2d translate
+                m_nowX = m_normalized_pressed_point.X - 0.5;
+                m_nowY = 0.5 - m_normalized_pressed_point.Y;
 
-				// 2d translate: origin is center of screen (0.5,0.5)
-				m_nowX = m_normalized_pressed_point.X - 0.5;
-				m_nowY = 0.5 - m_normalized_pressed_point.Y;
-				/*
-				var b = MatrixVectorOperation.Multiply(m_renderer.Transform, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
-                var a = MatrixVectorOperation.Multiply(m_renderer.Projection, b);
-                // projection
-                var arr = m_renderer.Projection.ToArray();
-				var M = Matrix<float>.Build;
-				m_inversedProjection = M.Dense(4, 4, arr).Inverse();
-				float[] v = { (float)m_nowX, (float)m_nowY, 0.0f, 1.0f };
-				var V = MathNet.Numerics.LinearAlgebra.Vector<float>.Build;
-				var x = m_inversedProjection * V.Dense(v);
-				//*/
-
-				m_lin = new FLine3D();
-				m_lin.Sp.X = m_lin.Ep.X = (float)m_nowX;
-				m_lin.Sp.Y = m_lin.Ep.Y = (float)m_nowY;
+                m_lin = new FLine3D();
+                m_lin.Sp.X = m_lin.Ep.X = (float)m_nowX;
+                m_lin.Sp.Y = m_lin.Ep.Y = (float)m_nowY;
 
                 m_lin.SetCol(ColorData.Line);   // blue rubber
-                ((App)Application.Current).DrawManager.Add(m_lin);
+                ((App)Application.Current).DrawManager.AddLast(m_lin);
+
                 SetLineText();
-                UpdateVertexCountDisplay();
                 m_renderer.UpdateVertexBuffer();
-                SetStateName(ELineGetState.Pressed);
+                SetState(ELineGetState.Pressed);
             }
         }
 
@@ -151,13 +140,11 @@ namespace DirectNXAML.ViewModels
             {
                 m_nowX = m_normalized_local_point.X - 0.5f;
                 m_nowY = 0.5f - m_normalized_local_point.Y;
-                // projection
-                //var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
 
-                ((App)Application.Current).DrawManager.DelLastLine();
+                ((App)Application.Current).DrawManager.DelLast();
                 m_lin.Ep.X = (float)m_nowX;
                 m_lin.Ep.Y = (float)m_nowY;
-                ((App)Application.Current).DrawManager.Add(m_lin);
+                ((App)Application.Current).DrawManager.AddLast(m_lin);
                 SetLineText();
                 m_renderer.UpdateVertexBuffer();
             }
@@ -165,28 +152,23 @@ namespace DirectNXAML.ViewModels
 
         internal ICommand ShaderPanel_PointerReleasedCommand { get; private set; }
 		private void ShaderPanel_PointerReleased(PointerRoutedEventArgs args)
-		{
-			SetNormalizedPointerReleased();
-			args.Handled = true;
 
-			// should elevate to Model layer
-			if (m_state == ELineGetState.Pressed)
-			{
-				ColorData.SetLine(ColorData.FixedLine);
+        {
+            if (m_state == ELineGetState.Pressed)
+            {
+                ColorData.SetLine(ColorData.FixedLine);
 
-				m_nowX = m_normalized_released_point.X - 0.5f;
-				m_nowY = 0.5f - m_normalized_released_point.Y;
-				// projection
-				//var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
+                m_nowX = m_normalized_released_point.X - 0.5f;
+                m_nowY = 0.5f - m_normalized_released_point.Y;
 
-                ((App)Application.Current).DrawManager.DelLastLine();
+                ((App)Application.Current).DrawManager.DelLast();
                 m_lin.Ep.X = (float)m_nowX;
                 m_lin.Ep.Y = (float)m_nowY;
                 m_lin.SetCol(ColorData.Line); // white : Rocked
-                ((App)Application.Current).DrawManager.Add(m_lin);
+                ((App)Application.Current).DrawManager.AddLast(m_lin);
                 SetLineText();
                 m_renderer.UpdateVertexBuffer();
-                SetStateName(ELineGetState.Begin);
+                SetState(ELineGetState.Begin);
             }
         }
 
@@ -194,9 +176,9 @@ namespace DirectNXAML.ViewModels
         {
             if (m_state == ELineGetState.Pressed)
             {
-                ((App)Application.Current).DrawManager.DelLastLine();
+                ((App)Application.Current).DrawManager.DelLast();
                 m_lin.Clear();
-                SetStateName(ELineGetState.none);
+                SetState(ELineGetState.none);
             }
         }
         #endregion
@@ -313,7 +295,7 @@ namespace DirectNXAML.ViewModels
 
         string m_state_name_text = "State: ";
         internal string StateName { get => m_state_name_text; set => SetProperty(ref m_state_name_text, value); }
-        private void SetStateName(ELineGetState _s)
+        private void SetState(ELineGetState _s)
         {
             m_state = _s;
             StateName = "State: " + System.Enum.GetName(typeof(ELineGetState), m_state);

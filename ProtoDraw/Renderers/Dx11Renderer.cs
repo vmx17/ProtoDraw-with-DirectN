@@ -224,7 +224,7 @@ namespace DirectNXAML.Renderers
                 textureDesc.Usage = D3D11_USAGE.D3D11_USAGE_IMMUTABLE;
                 textureDesc.BindFlags = (uint)D3D11_BIND_FLAG.D3D11_BIND_SHADER_RESOURCE;
 
-                gc = GCHandle.Alloc(SimpleDrawLineManager.TextureData, GCHandleType.Pinned);
+                gc = GCHandle.Alloc(((App)Application.Current).DrawManager.TextureData, GCHandleType.Pinned);
                 var textureData = new D3D11_SUBRESOURCE_DATA();
                 textureData.pSysMem = gc.AddrOfPinnedObject();
                 textureData.SysMemPitch = 20 * 4; // 4 bytes per pixel

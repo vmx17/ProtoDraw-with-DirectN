@@ -1,4 +1,5 @@
 ﻿using DirectNXAML.DrawData;
+using DirectNXAML.Model;
 using DirectNXAML.Renderers;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
