@@ -97,6 +97,7 @@ namespace DirectNXAML.Views
             {
                 viewModel.LocalPointerPoint = e.GetCurrentPoint(sender as SwapChainPanel).Position;
             }
+            e.Handled = true;
             viewModel.ShaderPanel_PointerMovedCommand.Execute(e);
         }
 

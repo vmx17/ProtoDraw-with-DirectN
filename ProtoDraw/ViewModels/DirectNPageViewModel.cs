@@ -101,7 +101,6 @@ namespace DirectNXAML.ViewModels
 		private void ShaderPanel_PointerMoved(PointerRoutedEventArgs args)
         {
             SetLocalPointerText();
-            args.Handled = true;
 
             // should elevate to Model layer
             if (m_state == ELineGetState.Pressed)
@@ -174,21 +173,11 @@ namespace DirectNXAML.ViewModels
                 SetStateName(ELineGetState.Begin);
             }
         }
-
-        private void CancelLineDrawing()
-        {
-            if (m_state == ELineGetState.Pressed)
-            {
-                ((App)Application.Current).DrawManager.DelLast();
-                m_lin.Clear();
-                SetStateName(ELineGetState.none);
-            }
-        }
         #endregion
 
         #region for display
         int m_vertex_count = 0;
-        private string m_vertex_count_text = "Vertecies: ";
+        private string m_vertex_count_text = "Num of Vertecies: ";
         internal string VertexCountText { get => m_vertex_count_text; set => SetProperty(ref m_vertex_count_text, value); }
         public int VertexCount { get => m_vertex_count; set => SetProperty(ref m_vertex_count, value); }
         private void UpdateVertexCountDisplay()
@@ -290,17 +279,14 @@ namespace DirectNXAML.ViewModels
 		internal double LocalHeight { get => m_local_height; set => m_local_height = value; }
 		internal double LocalWidth { get => m_local_width; set => m_local_width = value; }
 
-		Windows.Foundation.Point m_local_point, m_normalized_local_point;
+		Windows.Foundation.Point m_local_point;
 		internal Windows.Foundation.Point LocalPointerPoint { get => m_local_point; set => m_local_point = value; }
-        internal Windows.Foundation.Point NormalizedPointerPoint { get => m_normalized_local_point; set =>  m_normalized_local_point = value; }
 
-        Windows.Foundation.Point m_pressed_point, m_normalized_pressed_point;
+        Windows.Foundation.Point m_pressed_point;
         internal Windows.Foundation.Point PressedPoint { get => m_pressed_point; set => m_pressed_point = value; }
-        internal Windows.Foundation.Point NormalizedPressedPoint { get => m_normalized_pressed_point; set => m_normalized_pressed_point = value; }
 		
-		Windows.Foundation.Point m_released_point, m_normalized_released_point;
+		Windows.Foundation.Point m_released_point;
         internal Windows.Foundation.Point ReleasedPoint { get => m_released_point; set => m_released_point = value; }
-        internal Windows.Foundation.Point NormalizedReleasedPoint { get => m_normalized_released_point; set => m_normalized_released_point = value; }
 #endregion
     }
 }
