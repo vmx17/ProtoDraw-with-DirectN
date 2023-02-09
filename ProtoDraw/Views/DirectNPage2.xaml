@@ -45,6 +45,7 @@
             <TextBlock x:Name="LocalSize" Text="{x:Bind viewModel.LocalSizeText, Mode=OneWay}" />
             <TextBlock x:Name="LocalPoint" Text="{x:Bind viewModel.LocalPointerText, Mode=OneWay}" />
             <TextBlock x:Name="WorldPoint" Text="{x:Bind viewModel.WorldPositionText, Mode=OneWay}" />
+            <TextBlock x:Name="ProjectedPoint" Text="{x:Bind viewModel.ProjectedPositionText, Mode=OneWay}" />
             <TextBlock x:Name="NormalizedPointer" Text="{x:Bind viewModel.NormalizedPointerText, Mode=OneWay}" />
             <TextBlock x:Name="NormalizedPointerPressed" Text="{x:Bind viewModel.NormalizedPointerPressedText, Mode=OneWay}" />
             <TextBlock x:Name="NormalizedPointerReleased" Text="{x:Bind viewModel.NormalizedPointerReleasedText, Mode=OneWay}" />

@@ -310,6 +310,7 @@ namespace DirectNXAML.Renderers
         #endregion
 
         #region Rendering
+
         private Vector3 m_modelRotation = new(0, 0, 0);
         private Vector3 m_modelScale = new(1, 1, 1);
         private Vector3 m_modelTranslation = new(0, 0, 1500);

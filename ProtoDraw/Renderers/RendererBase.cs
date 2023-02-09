@@ -24,7 +24,7 @@ namespace DirectNXAML.Renderers
         public abstract void StopRendering();
         public abstract bool Render();
 
-        public abstract void SetSwapChainPanel(SwapChainPanel panel) ;
+        public abstract void SetSwapChainPanel(SwapChainPanel _panel);
         public abstract void Panel_SizeChanged(object sender, Microsoft.UI.Xaml.SizeChangedEventArgs e);
 
         protected float[] m_renderBackgroundColor = new float[] { 0.025f, 0.025f, 0.025f, 1 };

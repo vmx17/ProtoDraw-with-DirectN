@@ -342,7 +342,7 @@ namespace DirectNXAML.ViewModels
         }
 
         private string m_projected_position_text = "Projected Position: ";
-        internal string ProjectedPositionText { get => m_world_position_text; set => SetProperty(ref m_world_position_text, value); }
+        internal string ProjectedPositionText { get => m_projected_position_text; set => SetProperty(ref m_projected_position_text, value); }
         private void SetProjectedPositionText()
         {
             StringBuilder sb = new StringBuilder("Projected Position: (");

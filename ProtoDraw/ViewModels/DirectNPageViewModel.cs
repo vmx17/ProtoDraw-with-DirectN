@@ -22,11 +22,11 @@ using Microsoft.UI.Xaml.Controls;
 namespace DirectNXAML.ViewModels
 {
     internal class DirectNPageViewModel : ObservableObject
-	{
+    {
         /// <summary>
         /// the Renderer
         /// </summary>
-		RendererBase m_renderer = null;
+        RendererBase m_renderer = null;
         internal RendererBase PageRenderer { get { return m_renderer; } set { m_renderer = value; } }
 
         // for a simple line drawing state transition (should elevate to Model layer)
@@ -34,7 +34,7 @@ namespace DirectNXAML.ViewModels
         {
             none = -1,
             Begin = 0,
-			Pressed,
+            Pressed,
             maxEnum
         }
         ELineGetState m_state = ELineGetState.none;
@@ -56,8 +56,8 @@ namespace DirectNXAML.ViewModels
 
             ShaderPanel_SizeChangedCommand = new RelayCommand<SizeChangedEventArgs>(ShaderPanel_SizeChanged);
             ShaderPanel_PointerMovedCommand = new RelayCommand<PointerRoutedEventArgs>(ShaderPanel_PointerMoved);
-			ShaderPanel_PointerPressedCommand = new RelayCommand<PointerRoutedEventArgs>(ShaderPanel_PointerPressed);
-			ShaderPanel_PointerReleasedCommand = new RelayCommand<PointerRoutedEventArgs>(ShaderPanel_PointerReleased);
+            ShaderPanel_PointerPressedCommand = new RelayCommand<PointerRoutedEventArgs>(ShaderPanel_PointerPressed);
+            ShaderPanel_PointerReleasedCommand = new RelayCommand<PointerRoutedEventArgs>(ShaderPanel_PointerReleased);
             ColorData.ResetLineColor();
             UpdateVertexCountDisplay();
             SetState(ELineGetState.none);  // initial mode.
@@ -82,7 +82,7 @@ namespace DirectNXAML.ViewModels
         #region line draw state machine
         internal RoutedEventHandler SetState_DrawLineCommand { get; private set; }
         private void SetState_DrawLine(object sender, RoutedEventArgs e)
-		{
+        {
             if (m_state == ELineGetState.none)
             {
                 SetState(ELineGetState.Begin);
@@ -98,8 +98,8 @@ namespace DirectNXAML.ViewModels
         // for just a test drawing
         double m_nowX, m_nowY;  // position on local screen
         MathNet.Numerics.LinearAlgebra.Matrix<Single> m_projection, m_inversedProjection;
-		internal ICommand ShaderPanel_PointerPressedCommand { get; private set; }
-		private void ShaderPanel_PointerPressed(PointerRoutedEventArgs args)
+        internal ICommand ShaderPanel_PointerPressedCommand { get; private set; }
+        private void ShaderPanel_PointerPressed(PointerRoutedEventArgs args)
         {
             SetNormalizedPointerPressed();
             args.Handled = true;
@@ -149,7 +149,7 @@ namespace DirectNXAML.ViewModels
         }
 
         internal ICommand ShaderPanel_PointerReleasedCommand { get; private set; }
-		private void ShaderPanel_PointerReleased(PointerRoutedEventArgs args)
+        private void ShaderPanel_PointerReleased(PointerRoutedEventArgs args)
         {
             SetNormalizedPointerReleased();
             args.Handled = true;
@@ -316,18 +316,18 @@ namespace DirectNXAML.ViewModels
         internal Vector2 SwapChainActualSize { get; set; }
 
         double m_local_height, m_local_width;
-		internal double LocalHeight { get => m_local_height; set => m_local_height = value; }
-		internal double LocalWidth { get => m_local_width; set => m_local_width = value; }
+        internal double LocalHeight { get => m_local_height; set => m_local_height = value; }
+        internal double LocalWidth { get => m_local_width; set => m_local_width = value; }
 
-		Windows.Foundation.Point m_local_point, m_normalized_local_point;
-		internal Windows.Foundation.Point LocalPointerPoint { get => m_local_point; set => m_local_point = value; }
+        Windows.Foundation.Point m_local_point, m_normalized_local_point;
+        internal Windows.Foundation.Point LocalPointerPoint { get => m_local_point; set => m_local_point = value; }
         internal Windows.Foundation.Point NormalizedPointerPoint { get => m_normalized_local_point; set =>  m_normalized_local_point = value; }
 
         Windows.Foundation.Point m_pressed_point, m_normalized_pressed_point;
         internal Windows.Foundation.Point PressedPoint { get => m_pressed_point; set => m_pressed_point = value; }
         internal Windows.Foundation.Point NormalizedPressedPoint { get => m_normalized_pressed_point; set => m_normalized_pressed_point = value; }
-		
-		Windows.Foundation.Point m_released_point, m_normalized_released_point;
+        
+        Windows.Foundation.Point m_released_point, m_normalized_released_point;
         internal Windows.Foundation.Point ReleasedPoint { get => m_released_point; set => m_released_point = value; }
         internal Windows.Foundation.Point NormalizedReleasedPoint { get => m_normalized_released_point; set => m_normalized_released_point = value; }
 #endregion
