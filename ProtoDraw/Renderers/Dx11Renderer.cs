@@ -192,7 +192,7 @@ namespace DirectNXAML.Renderers
                 var vertexBufferDesc = new D3D11_BUFFER_DESC();
 
                 // consider to use static buffer if it short memory.
-                vertexBufferDesc.ByteWidth = (uint)((App)Application.Current).DrawManager.VertexData.SizeOf() + 144;
+                vertexBufferDesc.ByteWidth = (uint)((App)Application.Current).DrawManager.VertexData.SizeOf();
                 vertexBufferDesc.Usage = D3D11_USAGE.D3D11_USAGE_DYNAMIC;
                 vertexBufferDesc.BindFlags = (uint)D3D11_BIND_FLAG.D3D11_BIND_VERTEX_BUFFER;
                 vertexBufferDesc.CPUAccessFlags = (uint)D3D11_CPU_ACCESS_FLAG.D3D11_CPU_ACCESS_WRITE;

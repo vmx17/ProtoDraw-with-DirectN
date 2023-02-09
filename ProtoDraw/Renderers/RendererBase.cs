@@ -1,14 +1,7 @@
 ﻿using DirectN;
-using JeremyAnsel.DirectX.DXMath;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DirectNXAML.Renderers
 {

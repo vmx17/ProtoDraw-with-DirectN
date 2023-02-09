@@ -2,7 +2,6 @@
 using DirectNXAML.Views;
 using Microsoft.UI.Xaml;
 using System;
-using System.Collections.Generic;
 using static PInvoke.User32;
 
 // To learn more about WinUI, the WinUI project structure,

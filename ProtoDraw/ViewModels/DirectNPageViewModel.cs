@@ -1,23 +1,15 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DirectN;
 using DirectNXAML.DrawData;
-using DirectNXAML.Helpers;
-using DirectNXAML.Model;
 using DirectNXAML.Renderers;
-using JeremyAnsel.DirectX.DXMath;
-using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.LinearAlgebra.Single;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
 using System;
 using System.Globalization;
 using System.Numerics;
 using System.Text;
 using System.Windows.Input;
-using System.Drawing;
-using Microsoft.UI.Xaml.Controls;
 
 namespace DirectNXAML.ViewModels
 {

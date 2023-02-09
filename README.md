@@ -15,10 +15,10 @@ This program was made to [ask](https://github.com/smourier/DirectN/issues/32) ab
 7. It should add a line (means two vertecies) every "Mouse_Press - Mouse_Move- Mouse_Release" events. Blue line shows it as rubber band and fixed line is in white.
 
 ## repro error
-- Rare (fixed?). In "line add" state machine, iteration to add line (press mouse, move mouse and release mouse) cause access violation error.
+- Though there was access violation error, currently fixed.
 
 ## known bug
-- even though after successful update, the added data is incorrectly appears in vertex buffer. There is matrix unmatch. (Left up (0,0) is tranlated center of the screen.)
+- when you draw many lines, there were some unexpected line draw during mouse move. Those disappear click a point.
 - changing windows size does not invoke swap chain resize. Repeating resizing action fix this.
 
 ## issue
@@ -28,3 +28,4 @@ This program was made to [ask](https://github.com/smourier/DirectN/issues/32) ab
 - The renderer is located in `Renderers\Dx11Renderer.cs`. it has a `MapVertexData()` where cause memory access violation.
 - The data provider is `Model\SimpleDrawLineManager.cs`. At the top of the code has `VertexData` property which should be mapped as vertex data in renderer.
 - The current control center is `ViewModels\DirectNPageViewModel`.
+- This uses float value mainly in real coodinate. There are no normalized value operation.
