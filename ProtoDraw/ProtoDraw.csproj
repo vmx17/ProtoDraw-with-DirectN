@@ -22,7 +22,6 @@
     <None Remove="DirectNPage3.xaml" />
     <None Remove="OtherPage.xaml" />
     <None Remove="SettingsPage.xaml" />
-    <None Remove="Views\DirectNPage.xaml" />
     <None Remove="Views\DirectNPage2.xaml" />
   </ItemGroup>
 
@@ -91,12 +90,6 @@
     <Page Update="Views\DirectNPage2.xaml">
       <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
     </Page>
-    <Page Update="Views\DirectNPage.xaml">
-      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
-    </Page>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Converters\" />
   </ItemGroup>
 
   <!-- 
