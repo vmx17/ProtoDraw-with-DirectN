@@ -327,21 +327,15 @@ namespace DirectNXAML.Renderers
                 var scale = D2D_MATRIX_4X4_F.Scale(m_modelScale.X, m_modelScale.Y, m_modelScale.Z);
                 var translate = D2D_MATRIX_4X4_F.Translation(m_modelTranslation.X, m_modelTranslation.Y, m_modelTranslation.Z);
 
-                m_transform = rotateX * rotateY * rotateZ * scale * translate;
+                var transform = rotateX * rotateY * rotateZ * scale * translate;
+                var view = XMMatrix.LookAtLH(EyePosition, ForcusPosition, UpDirection);
 
                 // projection matrix
                 XMMatrix orthographic = XMMatrix.OrthographicLH(m_width, m_height, m_nearZ, m_farZ);
-                JeremyAnsel.DirectX.DXMath.XMMatrix viewMat = XMMatrix.LookAtRH(EyePosition, EyeDirection, UpDirection);
-                JeremyAnsel.DirectX.DXMath.XMMatrix viewFov= XMMatrix.LookAtRH(EyePosition, ForcusPosition, UpDirection);
-                //Everything is rendered in a size relative to the object’s actual size, regardless of its distance from the camera.
-                //viewMat = XMMatrix.OrthographicLH(40, 20, 50, 100);
 
-                //Objects further from the camera appear to be smaller because the field of view encompasses a greater range further from the focal point.
-                //viewMat = XMMatrix.PerspectiveLH(40, 20, 50, 100);
-                JeremyAnsel.DirectX.DXMath.XMMatrix projMat = XMMatrix.PerspectiveFovRH(XMMath.PIDivTwo, m_aspectRatio, 1.0f, 1500f);
-
-                /*
-                var f = viewMat.ToArray();
+                //*
+                var f = view.ToArray();
+                //var f = transform.ToArray();
                 m_transform = new D2D_MATRIX_4X4_F(f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7],
                     f[8], f[9], f[10], f[11], f[12], f[13], f[14], f[15]);
                 //*/
@@ -353,7 +347,7 @@ namespace DirectNXAML.Renderers
                 {
                     buffer.Transform = m_transform;
                     buffer.Projection = m_projection;
-                    buffer.LightVector = new XMFLOAT3(0, 0, 1500);
+                    buffer.LightVector = new XMFLOAT3(0, 0, -2000);
                 }
 
                 _deviceContext.WithMap<VS_CONSTANT_BUFFER>(_constantBuffer, 0, D3D11_MAP.D3D11_MAP_WRITE_DISCARD, mapAction);

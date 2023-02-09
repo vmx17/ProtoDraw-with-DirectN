@@ -23,7 +23,7 @@ namespace DirectNXAML.DrawData
         public FVertex3D()
         {
             m_c.pos = new(0f, 0f, Fz);      // x, y, z
-            m_c.nor = new(0f, 0f, -1f);     // NOR
+            m_c.nor = new(0f, 0f, 1f);     // NOR
             m_c.tex = new(0f, 0f);          // TEX
             m_c.col = new(1f, 1f, 1f, 1f);  // rgba
         }

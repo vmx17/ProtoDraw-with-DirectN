@@ -59,13 +59,13 @@ namespace DirectNXAML.Renderers
         public virtual D2D_MATRIX_4X4_F Projection { get => m_projection; set => m_projection = value; }
 
         protected float m_aspectRatio = 1.0f;
-        protected XMVector m_eyePosition = new(0, 0, 1500, 1);  // view point
+        protected XMVector m_eyePosition = new(0, 0, -1500, 1);  // view point
         protected XMVector m_eyeDirection = new(0, 0, 1, 1);    // target
         protected XMVector m_forcusPosition = new(0, 0, 0, 1);    // target
         protected XMVector m_upDirection = new(0, 1, 0, 1);     // up
 
         public virtual float AspectRatio { get => m_aspectRatio; set => m_aspectRatio = value; }
-        public virtual XMVector EyePosition { get => m_eyePosition; set => m_eyePosition = value; }
+        public virtual XMVector  EyePosition { get => m_eyePosition; set => m_eyePosition = value; }
         public virtual XMVector EyeDirection { get => m_eyeDirection; set => m_eyeDirection = value; }
         public virtual XMVector ForcusPosition { get => m_forcusPosition; set => m_forcusPosition = value; }
         public virtual XMVector UpDirection { get => m_upDirection; set => m_upDirection = value; }
