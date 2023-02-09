@@ -41,8 +41,6 @@ namespace DirectNXAML.Renderers
         private float m_nearZ = 1000.0f;
         private float m_farZ = 1000000.0f;
 
-        float[] m_renderBackgroundColor = new float[] { 0.025f, 0.025f, 0.025f, 1 };
-
         /// <summary>
         /// Constructor
         /// </summary>
@@ -303,45 +301,6 @@ namespace DirectNXAML.Renderers
                 depthBuffer.Dispose();
                 d3d11Device.Dispose();
             }
-        }
-        #endregion
-
-        #region set background color
-        /// <summary>
-        /// Set Backgroud Color
-        /// </summary>
-        /// <param name="_r"></param>
-        /// <param name="_g"></param>
-        /// <param name="_b"></param>
-        /// <param name="_a"></param>
-        public override void SetBGColor(float _r, float _g, float _b, float _a = 1.0f)
-        {
-            StopRendering();
-            lock (m_CriticalLock)
-            {
-                m_renderBackgroundColor[0] = _r;
-                m_renderBackgroundColor[1] = _g;
-                m_renderBackgroundColor[2] = _b;
-                m_renderBackgroundColor[3] = _a;
-            }
-            StartRendering();
-        }
-
-        /// <summary>
-        /// Set Backgroud Color
-        /// </summary>
-        /// <param name="_col"></param>
-        public void SetBGColor(Windows.UI.Color _col)
-        {
-            StopRendering();
-            lock (m_CriticalLock)
-            {
-                m_renderBackgroundColor[0] = ((float)_col.R) / 256f;
-                m_renderBackgroundColor[1] = ((float)_col.G) / 256f;
-                m_renderBackgroundColor[2] = ((float)_col.B) / 256f;
-                m_renderBackgroundColor[3] = ((float)_col.A) / 256f;
-            }
-            StartRendering();
         }
         #endregion
 
