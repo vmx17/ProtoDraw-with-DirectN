@@ -4,13 +4,11 @@ using DirectNXAML.Model;
 using JeremyAnsel.DirectX.DXMath;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 
 using System;
 using System.IO;        // for Path.Combine
 using System.Numerics;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography.X509Certificates;
 using WinRT;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -20,7 +18,7 @@ using WinRT;
 
 namespace DirectNXAML.Renderers
 {
-    public class Dx11Renderer2 : RendererBase
+    public class Dx11Renderer : RendererBase
     {
         private SwapChainPanel m_swapChainPanel = null;
         private IComObject<IDXGIDevice1> _dxgiDevice;
@@ -36,7 +34,6 @@ namespace DirectNXAML.Renderers
         private IComObject<ID3D11InputLayout> _inputLayout;
         private IComObject<ID3D11VertexShader> _vertexShader;
         private IComObject<ID3D11PixelShader> _pixelShader;
-        //private IComObject<ID3D11DepthStencilState> _depthStencilState;
         private IComObject<ID3D11ShaderResourceView> _shaderResourceView;
 
         private float m_width;
@@ -48,7 +45,7 @@ namespace DirectNXAML.Renderers
         /// Constructor
         /// </summary>
         /// <param name="_beginToStart"></param>
-        public Dx11Renderer2(bool _beginToStart = false)
+        public Dx11Renderer(bool _beginToStart = false)
         {
             ((App)Application.Current).DrawManager = new DrawManager();
 
@@ -105,7 +102,6 @@ namespace DirectNXAML.Renderers
             if (!_inputLayout.IsDisposed) _inputLayout.Dispose();
             if (!_vertexShader.IsDisposed) _vertexShader.Dispose();
             if (!_pixelShader.IsDisposed) _pixelShader.Dispose();
-            //if ((_depthStencilState != null) && !_depthStencilState.IsDisposed) _depthStencilState.Dispose();
             if ((_shaderResourceView != null) && !_shaderResourceView.IsDisposed) _shaderResourceView.Dispose();
 
         }
@@ -148,8 +144,6 @@ namespace DirectNXAML.Renderers
                 m_width = depthBufferDesc.Width;    // meanless
                 m_height = depthBufferDesc.Height;
                 
-                m_aspectRatio = m_width / m_height;
-                
                 depthBufferDesc.Format = DXGI_FORMAT.DXGI_FORMAT_D24_UNORM_S8_UINT;
                 depthBufferDesc.BindFlags = (uint)D3D11_BIND_FLAG.D3D11_BIND_DEPTH_STENCIL;
                 var depthBuffer = _device.CreateTexture2D<ID3D11Texture2D>(depthBufferDesc);
@@ -182,13 +176,6 @@ namespace DirectNXAML.Renderers
                 var psBlob = D3D11Functions.D3DCompileFromFile(path, "ps_main", "ps_5_0");
                 _pixelShader = _device.CreatePixelShader(psBlob);
 
-                /*var depthStencilDesc = new D3D11_DEPTH_STENCIL_DESC();
-                depthStencilDesc.DepthEnable = true;
-                depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK.D3D11_DEPTH_WRITE_MASK_ALL;
-                depthStencilDesc.DepthFunc = D3D11_COMPARISON_FUNC.D3D11_COMPARISON_LESS;
-                _depthStencilState = _device.CreateDepthStencilState(depthStencilDesc);
-                //*/
-
                 var constantBufferDesc = new D3D11_BUFFER_DESC();
                 constantBufferDesc.ByteWidth = (uint)Marshal.SizeOf<VS_CONSTANT_BUFFER>();
                 constantBufferDesc.Usage = D3D11_USAGE.D3D11_USAGE_DYNAMIC;
@@ -206,8 +193,6 @@ namespace DirectNXAML.Renderers
 
                 // consider to use static buffer if it short memory.
                 vertexBufferDesc.ByteWidth = (uint)((App)Application.Current).DrawManager.VertexData.SizeOf() + 144;
-                // 2358 = 14148 vertecies(x6) = 169776byte (x12) limit of Intel Celeron J4125
-                //vertexBufferDesc.ByteWidth = (uint)((App)Application.Current).DrawManager.VertexData.SizeOf() * 2358;
                 vertexBufferDesc.Usage = D3D11_USAGE.D3D11_USAGE_DYNAMIC;
                 vertexBufferDesc.BindFlags = (uint)D3D11_BIND_FLAG.D3D11_BIND_VERTEX_BUFFER;
                 vertexBufferDesc.CPUAccessFlags = (uint)D3D11_CPU_ACCESS_FLAG.D3D11_CPU_ACCESS_WRITE;
@@ -260,7 +245,6 @@ namespace DirectNXAML.Renderers
             var nativepanel = panel.As<ISwapChainPanelNative>();
             nativepanel.SetSwapChain(_swapChain.Object);
             
-            //panel.SizeChanged += Panel_SizeChanged;
             m_swapChainPanel = panel;
         }
         #endregion
@@ -287,7 +271,6 @@ namespace DirectNXAML.Renderers
                 _renderTargetView.Dispose();
                 _renderTargetView = null;
 
-                m_aspectRatio = (float)(_newSize.Width / _newSize.Height);
                 _swapChain.Object.ResizeBuffers(2, (uint)_newSize.Width, (uint)_newSize.Height, DXGI_FORMAT.DXGI_FORMAT_B8G8R8A8_UNORM, 0);
 
                 _deviceContext.Object.GetDevice(out var _device);
@@ -329,27 +312,10 @@ namespace DirectNXAML.Renderers
                 var rotateZ = D2D_MATRIX_4X4_F.RotationZ(m_modelRotation.Z);
                 var scale = D2D_MATRIX_4X4_F.Scale(m_modelScale.X, m_modelScale.Y, m_modelScale.Z);
                 var translate = D2D_MATRIX_4X4_F.Translation(m_modelTranslation.X, m_modelTranslation.Y, m_modelTranslation.Z);
-
                 m_transform = rotateX * rotateY * rotateZ * scale * translate;
 
                 // projection matrix
                 XMMatrix orthographic = XMMatrix.OrthographicLH(m_width, m_height, m_nearZ, m_farZ);
-                JeremyAnsel.DirectX.DXMath.XMMatrix viewMat = XMMatrix.LookAtRH(EyePosition, EyeDirection, UpDirection);
-                JeremyAnsel.DirectX.DXMath.XMMatrix viewFov= XMMatrix.LookAtRH(EyePosition, ForcusPosition, UpDirection);
-                //Everything is rendered in a size relative to the object’s actual size, regardless of its distance from the camera.
-                //viewMat = XMMatrix.OrthographicLH(40, 20, 50, 100);
-
-                //Objects further from the camera appear to be smaller because the field of view encompasses a greater range further from the focal point.
-                //viewMat = XMMatrix.PerspectiveLH(40, 20, 50, 100);
-                JeremyAnsel.DirectX.DXMath.XMMatrix projMat = XMMatrix.PerspectiveFovRH(XMMath.PIDivTwo, m_aspectRatio, 1.0f, 1500f);
-
-                /*
-                var f = viewMat.ToArray();
-                m_transform = new D2D_MATRIX_4X4_F(f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7],
-                    f[8], f[9], f[10], f[11], f[12], f[13], f[14], f[15]);
-                //*/
-                //m_projection = new D2D_MATRIX_4X4_F((2 * m_nearZ) / m_width, 0, 0, 0, 0, (2 * m_nearZ) / m_height, 0, 0, 0, 0, m_farZ / (m_farZ - m_nearZ), 1, 0, 0, (m_nearZ * m_farZ) / (m_nearZ - m_farZ), 0);
-
                 var p = orthographic.ToArray();
                 m_projection = new D2D_MATRIX_4X4_F(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
                     p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15]);
@@ -358,7 +324,7 @@ namespace DirectNXAML.Renderers
                 {
                     buffer.Transform = m_transform;
                     buffer.Projection = m_projection;
-                    buffer.LightVector = new XMFLOAT3(0, 0, 1500);
+                    buffer.LightVector = new XMFLOAT3(0, 0, 500);
                 }
 
                 _deviceContext.WithMap<VS_CONSTANT_BUFFER>(_constantBuffer, 0, D3D11_MAP.D3D11_MAP_WRITE_DISCARD, mapAction);
@@ -372,7 +338,6 @@ namespace DirectNXAML.Renderers
 
                 _deviceContext.Object.IASetInputLayout(_inputLayout.Object);
                 _deviceContext.Object.IASetVertexBuffers(0, 1, new ID3D11Buffer[] { _vertexBuffer.Object }, new uint[] { stride }, new uint[] { offset });
-                //_deviceContext.Object.IASetIndexBuffer(_indexBuffer.Object, DXGI_FORMAT.DXGI_FORMAT_R32_UINT, 0);
 
                 _deviceContext.Object.VSSetShader(_vertexShader.Object, null, 0);
                 _deviceContext.Object.VSSetConstantBuffers(0, 1, new ID3D11Buffer[] { _constantBuffer.Object });
@@ -386,7 +351,6 @@ namespace DirectNXAML.Renderers
                 _deviceContext.Object.PSSetShaderResources(0, 1, new ID3D11ShaderResourceView[] { _shaderResourceView.Object });
 
                 _deviceContext.Object.OMSetRenderTargets(1, new ID3D11RenderTargetView[] { _renderTargetView.Object }, _depthStencilView.Object);
-                //_deviceContext.Object.OMSetDepthStencilState(_depthStencilState.Object, 0);
 
                 _deviceContext.Object.Draw((uint)((App)Application.Current).DrawManager.VertexData.Length/2, 0u);
             }
@@ -409,9 +373,9 @@ namespace DirectNXAML.Renderers
         private void MapVertexData()
         {
             uint new_vbuffer_size = (uint)((App)Application.Current).DrawManager.VertexData.SizeOf();
-            if ((new_vbuffer_size > m_previous_v_buffersize) || (new_vbuffer_size < (m_previous_v_buffersize - 288)))
+            if (new_vbuffer_size != m_previous_v_buffersize)
             {
-                m_previous_v_buffersize = new_vbuffer_size + 144;   // +144: to reduce remake time
+                m_previous_v_buffersize = new_vbuffer_size;   // +144: to reduce remake time
                 RemakeVBuffer(m_previous_v_buffersize);
             }
             var gc = GCHandle.Alloc(((App)Application.Current).DrawManager.VertexData, GCHandleType.Pinned);
@@ -420,39 +384,22 @@ namespace DirectNXAML.Renderers
             gc.Free();
 
             var map = _deviceContext.Map(_vertexBuffer, 0, D3D11_MAP.D3D11_MAP_WRITE_DISCARD);
-            try
-            {
-                CopyMemory(map.pData, vertexData.pSysMem, (IntPtr)((App)Application.Current).DrawManager.VertexData.SizeOf());
-            }
-            catch (Exception ex)
-            {
-                var msg = ex.Message;   // for debug
-            }
-            finally
-            {
-                _deviceContext.Unmap(_vertexBuffer, 0);
-            }
+            CopyMemory(map.pData, vertexData.pSysMem, (IntPtr)((App)Application.Current).DrawManager.VertexData.SizeOf());
+            _deviceContext.Unmap(_vertexBuffer, 0);
         }
-        
+
         private void RemakeVBuffer(uint new_size)
         {
-            //D3D11_BUFFER_DESC vertexBufferDesc;
             _vertexBuffer.Object.GetDesc(out D3D11_BUFFER_DESC vertexBufferDesc);
             var gc = GCHandle.Alloc(((App)Application.Current).DrawManager.VertexData, GCHandleType.Pinned);
-            
+
             vertexBufferDesc.ByteWidth = new_size;
             var subResourceData = new D3D11_SUBRESOURCE_DATA();
             subResourceData.pSysMem = gc.AddrOfPinnedObject();
 
-            try
-            {
-                if ((_vertexBuffer!=null) && !_vertexBuffer.IsDisposed) _vertexBuffer.Dispose();
-                _vertexBuffer = _device.CreateBuffer(vertexBufferDesc, subResourceData);  // Runtime Callable Wrapper
-            }
-            catch (Exception ex)
-            {
-                var a = ex.Message; // for debug
-            }
+            if ((_vertexBuffer != null) && !_vertexBuffer.IsDisposed) _vertexBuffer.Dispose();
+            _vertexBuffer = _device.CreateBuffer(vertexBufferDesc, subResourceData);  // Runtime Callable Wrapper
+
             gc.Free();
         }
         #endregion

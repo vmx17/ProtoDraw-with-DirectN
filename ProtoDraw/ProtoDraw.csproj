@@ -22,7 +22,7 @@
     <None Remove="DirectNPage3.xaml" />
     <None Remove="OtherPage.xaml" />
     <None Remove="SettingsPage.xaml" />
-    <None Remove="Views\DirectNPage2.xaml" />
+    <None Remove="Views\DirectNPage.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -87,7 +87,7 @@
     <Page Update="DirectNPage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Update="Views\DirectNPage2.xaml">
+    <Page Update="Views\DirectNPage.xaml">
       <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
     </Page>
   </ItemGroup>

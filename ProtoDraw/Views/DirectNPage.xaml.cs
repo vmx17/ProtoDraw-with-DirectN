@@ -15,9 +15,9 @@ namespace DirectNXAML.Views
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class DirectNPage2 : Page
+    public sealed partial class DirectNPage : Page
     {
-        public DirectNPage2()
+        public DirectNPage()
         {
             this.InitializeComponent();
             this.NavigationCacheMode = NavigationCacheMode.Disabled;
@@ -39,6 +39,7 @@ namespace DirectNXAML.Views
                 {
                     throw new InvalidProgramException("Error at initializsizng renderer.");
                 }
+                // move from here to Model/ViewModel
                 viewModel.PageRenderer.SetSwapChainPanel(_scp);
                 viewModel.SCPSize_Changed += viewModel.PageRenderer.Panel_SizeChanged;
                 viewModel.PageRenderer.StartRendering();
@@ -50,7 +51,9 @@ namespace DirectNXAML.Views
         }
         private void DirectNPage_Unloaded(object sender, RoutedEventArgs e)
         {
+            // move from here to Model/ViewModel
             viewModel.PageRenderer.StopRendering();
+            viewModel.SCPSize_Changed -= viewModel.PageRenderer.Panel_SizeChanged;
             viewModel.PageRenderer.SetSwapChainPanel(null);
         }
 

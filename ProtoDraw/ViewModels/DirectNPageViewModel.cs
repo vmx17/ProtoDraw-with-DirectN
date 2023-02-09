@@ -21,7 +21,7 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace DirectNXAML.ViewModels
 {
-    internal class DirectNPage2ViewModel : ObservableObject
+    internal class DirectNPageViewModel : ObservableObject
 	{
         /// <summary>
         /// the Renderer
@@ -47,9 +47,9 @@ namespace DirectNXAML.ViewModels
         /// <summary>
         /// Constructor
         /// </summary>
-        internal DirectNPage2ViewModel()
+        internal DirectNPageViewModel()
         {
-            m_renderer = new Dx11Renderer2();
+            m_renderer = new Dx11Renderer();
             //SCPSize_Changed += m_renderer.Panel_SizeChanged;
             SetState_DrawLineCommand += SetState_DrawLine;
             SetState_SelectCommand += SetState_Select;
@@ -97,27 +97,19 @@ namespace DirectNXAML.ViewModels
         // for just a test drawing
         double m_absX, m_absY;
         double m_cx, m_cy;
-        double m_nowX, m_nowY;  // position on local screen
-        MathNet.Numerics.LinearAlgebra.Matrix<Single> m_projection, m_inversedProjection;
         public ICommand ShaderPanel_PointerMovedCommand { get; private set; }
 		private void ShaderPanel_PointerMoved(PointerRoutedEventArgs args)
         {
             SetLocalPointerText();
-            SetNormalizedPointerPosition();
             args.Handled = true;
 
             // should elevate to Model layer
             if (m_state == ELineGetState.Pressed)
             {
                 // 2d translate (absolute: store data)
-                m_absX = m_local_point.X - m_cx + m_renderer.EyePosition.X;
-                m_absY = m_cy - m_local_point.Y + m_renderer.EyePosition.Y;
+                m_absX = m_local_point.X - m_cx;
+                m_absY = m_cy - m_local_point.Y;
                 SetWorldPositionText();
-                // current point (local: center origin)
-                m_nowX = m_absX - m_renderer.EyePosition.X;
-                m_nowY = m_absY - m_renderer.EyePosition.Y;
-                // projection
-                var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
 
                 ((App)Application.Current).DrawManager.DelLast();
                 m_lin.Ep.X = (float)m_absX;
@@ -131,7 +123,6 @@ namespace DirectNXAML.ViewModels
 		internal ICommand ShaderPanel_PointerPressedCommand { get; private set; }
 		private void ShaderPanel_PointerPressed(PointerRoutedEventArgs args)
         {
-            SetNormalizedPointerPressed();
             args.Handled = true;
 
             // should elevate to Model layer
@@ -141,20 +132,9 @@ namespace DirectNXAML.ViewModels
 
                 m_cx = ActualWidth / 2; m_cy = ActualHeight / 2;
                 // 2d translate (absolute: store data)
-                m_absX = m_pressed_point.X - m_cx + m_renderer.EyePosition.X;
-                m_absY = m_cy - m_pressed_point.Y + m_renderer.EyePosition.Y;
+                m_absX = m_pressed_point.X - m_cx;
+                m_absY = m_cy - m_pressed_point.Y;
                 SetWorldPositionText();
-                var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_absX, (float)m_absY, 0.0f, 1.0f));
-                m_nowX = a.X;
-                m_nowY = a.Y;
-                SetProjectedPositionText();
-                // projection
-                var arr = m_renderer.Projection.ToArray();
-                var M = Matrix<float>.Build;
-                m_inversedProjection = M.Dense(4, 4, arr).Inverse();
-                float[] b = { (float)m_nowX, (float)m_nowY, 0.0f, 1.0f };
-                var V = MathNet.Numerics.LinearAlgebra.Vector<float>.Build;
-                var x = m_inversedProjection * V.Dense(b);
 
                 m_lin = new FLine3D();
                 m_lin.Sp.X = m_lin.Ep.X = (float)m_absX;
@@ -172,7 +152,6 @@ namespace DirectNXAML.ViewModels
 		internal ICommand ShaderPanel_PointerReleasedCommand { get; private set; }
 		private void ShaderPanel_PointerReleased(PointerRoutedEventArgs args)
         {
-            SetNormalizedPointerReleased();
             args.Handled = true;
 
             // should elevate to Model layer
@@ -181,12 +160,9 @@ namespace DirectNXAML.ViewModels
                 ColorData.SetLine(ColorData.FixedLine);
 
                 // 2d translate (absolute: store data)
-                m_absX = m_local_point.X - m_cx + m_renderer.EyePosition.X;
-                m_absY = m_cy - m_local_point.Y + m_renderer.EyePosition.Y;
+                m_absX = m_local_point.X - m_cx;
+                m_absY = m_cy - m_local_point.Y;
                 SetWorldPositionText();
-                // projection
-                var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_absX, (float)m_absY, 0.0f, 1.0f));
-                SetProjectedPositionText();
 
                 ((App)Application.Current).DrawManager.DelLast();
                 m_lin.Ep.X = (float)m_absX;
@@ -246,50 +222,6 @@ namespace DirectNXAML.ViewModels
             sb.Clear();
         }
 
-        string m_normalized_pointer_text= "Normalized Pointer:";
-        internal string NormalizedPointerText { get => m_normalized_pointer_text; set => SetProperty(ref m_normalized_pointer_text, value); }
-        private void SetNormalizedPointerPosition()
-        {
-            m_normalized_local_point.X = m_local_point.X / ActualWidth;
-            m_normalized_local_point.Y = m_local_point.Y / ActualHeight;
-            StringBuilder sb = new StringBuilder("Normalized Pointer:(");
-            sb.Append(m_normalized_local_point.X.ToString("F3", CultureInfo.InvariantCulture))
-                .Append(", ")
-                .Append(m_normalized_local_point.Y.ToString("F3", CultureInfo.InvariantCulture))
-                .Append(") ");
-            NormalizedPointerText = sb.ToString();
-            sb.Clear();
-        }
-
-        string m_normalized_pointer_pressed_text = "Normalized Pressed";
-        internal string NormalizedPointerPressedText { get => m_normalized_pointer_pressed_text; set => SetProperty(ref m_normalized_pointer_pressed_text, value); }
-        private void SetNormalizedPointerPressed()
-        {
-            m_normalized_pressed_point.X = m_pressed_point.X / ActualWidth;
-            m_normalized_pressed_point.Y = m_pressed_point.Y / ActualHeight;
-            StringBuilder sb = new StringBuilder("Normalized Pressed:(");
-            sb.Append(m_normalized_pressed_point.X.ToString("F3", CultureInfo.InvariantCulture))
-                .Append(", ")
-                .Append(m_normalized_pressed_point.Y.ToString("F3", CultureInfo.InvariantCulture))
-                .Append(") ");
-            NormalizedPointerPressedText = sb.ToString();
-            sb.Clear();
-        }
-
-        string m_normalized_pointer_released_text = "Normalized Released";
-        internal string NormalizedPointerReleasedText { get => m_normalized_pointer_released_text; set => SetProperty(ref m_normalized_pointer_released_text, value); }
-        private void SetNormalizedPointerReleased()
-        {
-            m_normalized_released_point.X = m_released_point.X / ActualWidth;
-            m_normalized_released_point.Y = m_released_point.Y / ActualHeight;
-            StringBuilder sb = new StringBuilder("Normalized Released:(");
-            sb.Append(m_normalized_released_point.X.ToString("F3", CultureInfo.InvariantCulture))
-                .Append(", ")
-                .Append(m_normalized_released_point.Y.ToString("F3", CultureInfo.InvariantCulture))
-                .Append(") ");
-            NormalizedPointerReleasedText = sb.ToString();
-        }
-
         string m_local_size_text = "Local Size: ";
         internal string LocalSizeText { get => m_local_size_text; set => SetProperty(ref m_local_size_text, value); }
         private void SetLocalSizeText()
@@ -338,19 +270,6 @@ namespace DirectNXAML.ViewModels
                 .Append(m_absY.ToString("F3", CultureInfo.InvariantCulture))
                 .Append(") ");
             WorldPositionText = sb.ToString();
-            sb.Clear();
-        }
-
-        private string m_projected_position_text = "Projected Position: ";
-        internal string ProjectedPositionText { get => m_world_position_text; set => SetProperty(ref m_world_position_text, value); }
-        private void SetProjectedPositionText()
-        {
-            StringBuilder sb = new StringBuilder("Projected Position: (");
-            sb.Append(m_nowX.ToString("F3", CultureInfo.InvariantCulture))
-                .Append(", ")
-                .Append(m_nowY.ToString("F3", CultureInfo.InvariantCulture))
-                .Append(") ");
-            ProjectedPositionText = sb.ToString();
             sb.Clear();
         }
         #endregion

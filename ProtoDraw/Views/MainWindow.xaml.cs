@@ -21,9 +21,9 @@ namespace DirectNXAML.Views
             var item = args.InvokedItemContainer as NavigationViewItem;
             if (args != null)
             {
-                if ((string)(item.Tag) == "DirectNPage2")
+                if ((string)(item.Tag) == "DirectNPage")
                 {
-                    ContentFrame.Navigate(typeof(DirectNPage2), null);
+                    ContentFrame.Navigate(typeof(DirectNPage), null);
                 }
                 else
                 {

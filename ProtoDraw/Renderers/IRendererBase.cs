@@ -14,9 +14,5 @@ namespace DirectNXAML.Renderers
         public abstract void StartRendering();
         public abstract void StopRendering();
         public abstract bool Render();
-
-        public XMVector EyePosition { get; set; }
-        public XMVector EyeDirection { get; set; }
-        public XMVector UpDirection { get; set; }
     }
 }
