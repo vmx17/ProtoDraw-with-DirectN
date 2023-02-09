@@ -24,7 +24,7 @@ namespace DirectNXAML.Renderers
         public abstract void StopRendering();
         public abstract bool Render();
 
-        public abstract void SetSwapChainPanel(SwapChainPanel panel) ;
+        public abstract void SetSwapChainPanel(SwapChainPanel panel);
         public abstract void Panel_SizeChanged(object sender, Microsoft.UI.Xaml.SizeChangedEventArgs e);
 
         protected float[] m_renderBackgroundColor = new float[] { 0.025f, 0.025f, 0.025f, 1 };
@@ -61,7 +61,7 @@ namespace DirectNXAML.Renderers
         protected float m_aspectRatio = 1.0f;
         protected XMVector m_eyePosition = new(0, 0, 1500, 1);  // view point
         protected XMVector m_eyeDirection = new(0, 0, 1, 1);    // target
-        protected XMVector m_forcusPosition = new(0, 0, 0, 1);    // target
+        protected XMVector m_forcusPosition = new(0, 0, 0, 1);  // target
         protected XMVector m_upDirection = new(0, 1, 0, 1);     // up
 
         public virtual float AspectRatio { get => m_aspectRatio; set => m_aspectRatio = value; }
