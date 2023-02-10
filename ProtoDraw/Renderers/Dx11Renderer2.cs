@@ -313,7 +313,7 @@ namespace DirectNXAML.Renderers
 
         private Vector3 m_modelRotation = new(0, 0, 0);
         private Vector3 m_modelScale = new(1, 1, 1);
-        private Vector3 m_modelTranslation = new(0, 0, 1500);
+        private Vector3 m_modelTranslation = new(0, 0, 0);
 
         public override bool Render()
         {
@@ -328,10 +328,12 @@ namespace DirectNXAML.Renderers
                 var translate = D2D_MATRIX_4X4_F.Translation(m_modelTranslation.X, m_modelTranslation.Y, m_modelTranslation.Z);
 
                 var transform = rotateX * rotateY * rotateZ * scale * translate;
-                var view = XMMatrix.LookAtLH(EyePosition, ForcusPosition, UpDirection);
+                
+                //var view = XMMatrix.LookAtLH(EyePosition, ForcusPosition, UpDirection);
+                var view = XMMatrix.LookToRH(EyePosition, EyeDirection, UpDirection);
 
                 // projection matrix
-                XMMatrix orthographic = XMMatrix.OrthographicLH(m_width, m_height, m_nearZ, m_farZ);
+                XMMatrix orthographic = XMMatrix.OrthographicRH(m_width, m_height, m_nearZ, m_farZ);
 
                 //*
                 var f = view.ToArray();
@@ -347,7 +349,7 @@ namespace DirectNXAML.Renderers
                 {
                     buffer.Transform = m_transform;
                     buffer.Projection = m_projection;
-                    buffer.LightVector = new XMFLOAT3(0, 0, -2000);
+                    buffer.LightVector = new XMFLOAT3(0, 0, -1);    // direction of light, not position of light
                 }
 
                 _deviceContext.WithMap<VS_CONSTANT_BUFFER>(_constantBuffer, 0, D3D11_MAP.D3D11_MAP_WRITE_DISCARD, mapAction);
