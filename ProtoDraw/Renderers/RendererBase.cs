@@ -54,6 +54,11 @@ namespace DirectNXAML.Renderers
             StartRendering();
         }
 
+        protected float m_viewScale = 1.0f;
+        public virtual float ViewScale { get => m_viewScale; set => m_viewScale = value; }
+
+        protected SwapChainPanel m_swapChainPanel = null;
+        public virtual SwapChainPanel SCPanel { get => m_swapChainPanel; }
         protected D2D_MATRIX_4X4_F m_transform, m_projection;
         public virtual D2D_MATRIX_4X4_F Transform { get => m_transform; set => m_transform = value; }
         public virtual D2D_MATRIX_4X4_F Projection { get => m_projection; set => m_projection = value; }

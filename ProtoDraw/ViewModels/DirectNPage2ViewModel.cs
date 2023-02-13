@@ -1,10 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DirectN;
-using DirectNXAML.DrawData;
-using DirectNXAML.Helpers;
-using DirectNXAML.Model;
-using DirectNXAML.Renderers;
 using JeremyAnsel.DirectX.DXMath;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Single;
@@ -18,6 +14,14 @@ using System.Text;
 using System.Windows.Input;
 using System.Drawing;
 using Microsoft.UI.Xaml.Controls;
+using DirectNXAML.DrawData;
+using DirectNXAML.Helpers;
+using DirectNXAML.Model;
+using DirectNXAML.Renderers;
+using DirectNXAML.Services.Enums;
+using static PInvoke.Kernel32;
+using Microsoft.UI.Input;
+using System.Runtime.InteropServices;
 
 namespace DirectNXAML.ViewModels
 {
@@ -39,6 +43,9 @@ namespace DirectNXAML.ViewModels
         }
         ELineGetState m_state = ELineGetState.none;
 
+        internal delegate void SetCursor(int _x, int _y);
+        internal SetCursor SetCursorMethods;
+
         /// <summary>
         /// temporary line object
         /// </summary>
@@ -58,9 +65,10 @@ namespace DirectNXAML.ViewModels
             ShaderPanel_PointerMovedCommand = new RelayCommand<PointerRoutedEventArgs>(ShaderPanel_PointerMoved);
 			ShaderPanel_PointerPressedCommand = new RelayCommand<PointerRoutedEventArgs>(ShaderPanel_PointerPressed);
 			ShaderPanel_PointerReleasedCommand = new RelayCommand<PointerRoutedEventArgs>(ShaderPanel_PointerReleased);
+            ShaderPanel_PointerWheelChangedCommand  =  new RelayCommand<PointerRoutedEventArgs>(ShaderPanel_PointerWheelChanged);
             ColorData.ResetLineColor();
             UpdateVertexCountDisplay();
-            SetStateName(ELineGetState.none);  // initial mode.
+            SetLineState(ELineGetState.none);  // initial mode.
         }
         public void Dispose()
         {
@@ -74,14 +82,16 @@ namespace DirectNXAML.ViewModels
 		{
             if (m_state == ELineGetState.none)
             {
-                SetStateName(ELineGetState.Begin);
+                SetLineState(ELineGetState.Begin);
+                SetWheelScale();
             }
         }
         internal RoutedEventHandler SetState_SelectCommand { get; private set; }
         private void SetState_Select(object sender, RoutedEventArgs e)
         {
             // reset any state machine before here
-            SetStateName(ELineGetState.none);
+            SetLineState(ELineGetState.none);
+            //(Application.Current as App).CurrentWindow.CoreWindow.PointerCursor = new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Arrow, 0);
         }
         internal ICommand ShaderPanel_SizeChangedCommand { get; private set; }
         private void ShaderPanel_SizeChanged(SizeChangedEventArgs args)
@@ -95,85 +105,126 @@ namespace DirectNXAML.ViewModels
         }
 
         // for just a test drawing
-        double m_absX, m_absY;
-        double m_cx, m_cy;
-        double m_nowX, m_nowY;  // position on local screen
+        double m_absX = 0, m_absY = 0;  // absolute position of cursor
+        double m_orgX = 0, m_orgY = 0;  // relative position of world origin
+        double m_cx, m_cy;              // center of SwapChainPanel
+        double m_nowX, m_nowY;          // position on local screen
         MathNet.Numerics.LinearAlgebra.Matrix<Single> m_projection, m_inversedProjection;
         public ICommand ShaderPanel_PointerMovedCommand { get; private set; }
 		private void ShaderPanel_PointerMoved(PointerRoutedEventArgs args)
         {
+            SetPointerButton(args);
             SetLocalPointerText();
+            //m_cx = ActualWidth / 2; m_cy = ActualHeight / 2;
+            m_cx = m_local_point.X - ActualWidth / 2;
+            m_cy = ActualHeight / 2 - m_local_point.Y;
+            SetCentralizedPositionText();
             SetNormalizedPointerPosition();
             args.Handled = true;
 
             // should elevate to Model layer
             if (m_state == ELineGetState.Pressed)
             {
-                // 2d translate (absolute: store data)
-                m_absX = m_local_point.X - m_cx + m_renderer.EyePosition.X;
-                m_absY = m_cy - m_local_point.Y + m_renderer.EyePosition.Y;
-                SetWorldPositionText();
-                // current point (local: center origin)
-                m_nowX = m_absX - m_renderer.EyePosition.X;
-                m_nowY = m_absY - m_renderer.EyePosition.Y;
-                // projection
-                var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
+                if (m_left_pressed)
+                {
+                    // 2d translate (absolute: store data)
+                    m_absX = (m_cx + (double)m_renderer.EyePosition.X) * (double)m_viewScale;
+                    m_absY = (m_cy + (double)m_renderer.EyePosition.Y) * (double)m_viewScale;
+                    SetWorldPositionText();
+                    // current point (local: center origin)
+                    m_nowX = m_absX - m_renderer.EyePosition.X;
+                    m_nowY = m_absY - m_renderer.EyePosition.Y;
+                    // projection
+                    var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_nowX, (float)m_nowY, 0.0f, 1.0f));
+                    SetProjectedPositionText();
 
-                ((App)Application.Current).DrawManager.DelLast();
-                m_lin.Ep.X = (float)m_absX;
-                m_lin.Ep.Y = (float)m_absY;
-                ((App)Application.Current).DrawManager.AddLast(m_lin);
-                SetLineText();
-                m_renderer.UpdateVertexBuffer();
+                    ((App)Application.Current).DrawManager.DelLast();
+                    m_lin.Ep.X = (float)m_absX;
+                    m_lin.Ep.Y = (float)m_absY;
+                    ((App)Application.Current).DrawManager.AddLast(m_lin);
+                    SetLineText();
+                    m_renderer.UpdateVertexBuffer();
+                }
+                else
+                {
+                    // cancel
+                    ((App)Application.Current).DrawManager.DelLast();
+                    SetLineState(ELineGetState.Begin);
+                }
             }
         }
 
 		internal ICommand ShaderPanel_PointerPressedCommand { get; private set; }
 		private void ShaderPanel_PointerPressed(PointerRoutedEventArgs args)
         {
+            SetPointerButton(args);
             SetNormalizedPointerPressed();
             args.Handled = true;
+
+            // Centerlized Current Position
+            //m_cx = ActualWidth / 2; m_cy = ActualHeight / 2;
+            m_cx = m_pressed_point.X - ActualWidth / 2;
+            m_cy = ActualHeight / 2 - m_pressed_point.Y;
+            SetCentralizedPositionText();
+            // 2d translate (absolute: store data)
+            m_absX = (m_cx + (double)m_renderer.EyePosition.X) * (double)m_viewScale;
+            m_absY = (m_cy + (double)m_renderer.EyePosition.Y) * (double)m_viewScale;
+            SetWorldPositionText();
+            var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_absX, (float)m_absY, 0.0f, 1.0f));
+            m_nowX = a.X;
+            m_nowY = a.Y;
+            SetProjectedPositionText();
 
             // should elevate to Model layer
             if (m_state == ELineGetState.Begin)
             {
-                ColorData.SetLine(ColorData.RubberLine);
+                if (m_left_pressed)
+                {
+                    ColorData.SetLine(ColorData.RubberLine);
+                    //(Application.Current as App).CurrentWindow.CoreWindow.PointerCursor = new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Cross, 0);
 
-                m_cx = ActualWidth / 2; m_cy = ActualHeight / 2;
-                // 2d translate (absolute: store data)
-                m_absX = m_pressed_point.X - m_cx + m_renderer.EyePosition.X;
-                m_absY = m_cy - m_pressed_point.Y + m_renderer.EyePosition.Y;
-                SetWorldPositionText();
-                var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_absX, (float)m_absY, 0.0f, 1.0f));
-                m_nowX = a.X;
-                m_nowY = a.Y;
-                SetProjectedPositionText();
-                // projection
-                var arr = m_renderer.Projection.ToArray();
-                var M = Matrix<float>.Build;
-                m_inversedProjection = M.Dense(4, 4, arr).Inverse();
-                float[] b = { (float)m_nowX, (float)m_nowY, 0.0f, 1.0f };
-                var V = MathNet.Numerics.LinearAlgebra.Vector<float>.Build;
-                var x = m_inversedProjection * V.Dense(b);
+                    // projection
+                    var arr = m_renderer.Projection.ToArray();
+                    var M = Matrix<float>.Build;
+                    m_inversedProjection = M.Dense(4, 4, arr).Inverse();
+                    float[] b = { (float)m_nowX, (float)m_nowY, 0.0f, 1.0f };
+                    var V = MathNet.Numerics.LinearAlgebra.Vector<float>.Build;
+                    var x = m_inversedProjection * V.Dense(b);
 
-                m_lin = new FLine3D();
-                m_lin.Sp.X = m_lin.Ep.X = (float)m_absX;
-                m_lin.Sp.Y = m_lin.Ep.Y = (float)m_absY;
+                    m_lin = new FLine3D();
+                    m_lin.Sp.X = m_lin.Ep.X = (float)m_absX;
+                    m_lin.Sp.Y = m_lin.Ep.Y = (float)m_absY;
 
-                m_lin.SetCol(ColorData.Line);   // blue rubber
-                ((App)Application.Current).DrawManager.AddLast(m_lin);
-                SetLineText();
-                UpdateVertexCountDisplay();
-                m_renderer.UpdateVertexBuffer();
-                SetStateName(ELineGetState.Pressed);
+                    m_lin.SetCol(ColorData.Line);   // blue rubber
+                    ((App)Application.Current).DrawManager.AddLast(m_lin);
+                    SetLineText();
+                    UpdateVertexCountDisplay();
+                    m_renderer.UpdateVertexBuffer();
+                    SetLineState(ELineGetState.Pressed);
+                }
+            }
+            if (m_middle_pressed)
+            {
+                m_renderer.EyePosition = new((float)m_absX, (float)m_absY, m_renderer.EyePosition.Z, m_renderer.EyePosition.W);
+                if (SetCursorMethods != null) SetCursorMethods.Invoke((int)ActualWidth / 2, (int)ActualHeight / 2);
+                m_orgX = -m_cx * m_viewScale;
+                m_orgY = -m_cy * m_viewScale;
+                //(Application.Current as App).CurrentWindow.CoreWindow.PointerPosition = new(m_renderer.EyePosition.X, m_renderer.EyePosition.Y);
+                //(Application.Current as App).CurrentWindow.CoreWindow.PointerCursor = new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Cross, 0);
             }
         }
 
 		internal ICommand ShaderPanel_PointerReleasedCommand { get; private set; }
 		private void ShaderPanel_PointerReleased(PointerRoutedEventArgs args)
         {
+            SetPointerButton(args);
             SetNormalizedPointerReleased();
             args.Handled = true;
+            SetLocalPointerText();
+            //m_cx = ActualWidth / 2; m_cy = ActualHeight / 2;
+            m_cx = m_released_point.X - ActualWidth / 2;
+            m_cy = ActualHeight / 2 - m_released_point.Y;
+            SetCentralizedPositionText();
 
             // should elevate to Model layer
             if (m_state == ELineGetState.Pressed)
@@ -181,8 +232,8 @@ namespace DirectNXAML.ViewModels
                 ColorData.SetLine(ColorData.FixedLine);
 
                 // 2d translate (absolute: store data)
-                m_absX = m_local_point.X - m_cx + m_renderer.EyePosition.X;
-                m_absY = m_cy - m_local_point.Y + m_renderer.EyePosition.Y;
+                m_absX = (m_cx + (double)m_renderer.EyePosition.X) * (double)m_viewScale;
+                m_absY = (m_cy + (double)m_renderer.EyePosition.Y) * (double)m_viewScale;
                 SetWorldPositionText();
                 // projection
                 var a = MatrixVectorOperation.Multiply(m_renderer.Projection, new Vector4((float)m_absX, (float)m_absY, 0.0f, 1.0f));
@@ -195,22 +246,109 @@ namespace DirectNXAML.ViewModels
                 ((App)Application.Current).DrawManager.AddLast(m_lin);
                 SetLineText();
                 m_renderer.UpdateVertexBuffer();
-                SetStateName(ELineGetState.Begin);
+                SetLineState(ELineGetState.Begin);
             }
         }
-
+        
+        /// <summary>
+        /// cancel drawing to go another state machine
+        /// </summary>
         private void CancelLineDrawing()
         {
             if (m_state == ELineGetState.Pressed)
             {
                 ((App)Application.Current).DrawManager.DelLast();
                 m_lin.Clear();
-                SetStateName(ELineGetState.none);
+                SetLineState(ELineGetState.none);
             }
+        }
+
+
+        /// <summary>
+        /// recognize mouse button
+        /// </summary>
+        /// <param name="_args"></param>
+        private void SetPointerButton(in PointerRoutedEventArgs _args)
+        {
+            Pointer ptr = _args.Pointer;
+            if (ptr.PointerDeviceType == Microsoft.UI.Input.PointerDeviceType.Mouse)
+            {
+                // To get mouse state, we need extended pointer details.
+                // We get the pointer info through the getCurrentPoint method
+                // of the event argument. 
+                Microsoft.UI.Input.PointerPoint ptrPt = _args.GetCurrentPoint(m_renderer.SCPanel);
+                IsLeftButtonPressed = ptrPt.Properties.IsLeftButtonPressed;
+                IsMiddleButtonPressed = ptrPt.Properties.IsMiddleButtonPressed;
+                IsRightButtonPressed = ptrPt.Properties.IsRightButtonPressed;
+            }
+        }
+        internal ICommand ShaderPanel_PointerWheelChangedCommand;
+        public void ShaderPanel_PointerWheelChanged(PointerRoutedEventArgs _args)
+        {
+            SetWheelScale();
+        }
+
+        private double m_viewScale = 1.0;
+        private void SetWheelScale()
+        {
+            double d = Math.Round(1.0 - (double)m_mouse_wheel_delta / 1000.0, 3, MidpointRounding.AwayFromZero);
+            m_viewScale = (d <= 0.001) ? 0.001 : d;
+            m_renderer.ViewScale = (float)m_viewScale;
+            SetViewScaleText();
         }
         #endregion
 
         #region for display
+
+        bool m_left_pressed = false;
+        bool m_middle_pressed = false;
+        bool m_right_pressed = false;
+        private EMouseButtonStatus m_mouse_status;
+        internal EMouseButtonStatus MouseStatus { get => m_mouse_status; private set => SetProperty(ref m_mouse_status, value); }
+        internal bool IsLeftButtonPressed
+        {
+            get => m_left_pressed;
+            set
+            {
+                if (m_left_pressed != value)
+                {
+                    SetProperty(ref m_left_pressed, value);
+                    m_mouse_status = (EMouseButtonStatus)Helpers.MouseStatus.GetButtons(m_left_pressed, m_middle_pressed, IsRightButtonPressed);
+                }
+            }
+        }
+        internal bool IsMiddleButtonPressed
+        {
+            get => m_middle_pressed;
+            set
+            {
+                if (m_middle_pressed != value)
+                {
+                    SetProperty(ref m_middle_pressed, value);
+                    m_mouse_status = (EMouseButtonStatus)Helpers.MouseStatus.GetButtons(m_left_pressed, m_middle_pressed, m_right_pressed);
+                }
+            }
+        }
+
+        internal bool IsRightButtonPressed
+        {
+            get => m_right_pressed;
+            set
+            {
+                if (m_right_pressed != value)
+                {
+                    SetProperty(ref m_right_pressed, value);
+                    m_mouse_status = (EMouseButtonStatus)Helpers.MouseStatus.GetButtons(m_left_pressed, m_middle_pressed, m_right_pressed);
+                }
+            }
+        }
+        private int m_mouse_wheel_delta = 0;
+        internal int MouseWheelDelta
+        {
+            get => m_mouse_wheel_delta;
+            set => m_mouse_wheel_delta = value;
+        }
+
         int m_vertex_count = 0;
         private string m_vertex_count_text = "Vertecies: ";
         internal string VertexCountText { get => m_vertex_count_text; set => SetProperty(ref m_vertex_count_text, value); }
@@ -290,6 +428,25 @@ namespace DirectNXAML.ViewModels
             NormalizedPointerReleasedText = sb.ToString();
         }
 
+        string m_view_scale_text = "View Scale: ";
+        internal string ViewScaleText { get => m_view_scale_text; set => SetProperty(ref m_view_scale_text, value); }
+        private void SetViewScaleText()
+        {
+            StringBuilder sb = new StringBuilder("View Scale: ");
+            var a = 1000 / m_viewScale;
+            if (a < 1000)
+            {
+                sb.Append(a.ToString("F0", CultureInfo.InvariantCulture)).Append("/1000");
+            }
+            else
+            {
+                a = 1 / m_viewScale;
+                sb.Append(a.ToString("F3", CultureInfo.InvariantCulture));
+            }
+            ViewScaleText = sb.ToString();
+            sb.Clear();
+        }
+
         string m_local_size_text = "Local Size: ";
         internal string LocalSizeText { get => m_local_size_text; set => SetProperty(ref m_local_size_text, value); }
         private void SetLocalSizeText()
@@ -322,14 +479,33 @@ namespace DirectNXAML.ViewModels
 
         string m_state_name_text = "State: ";
         internal string StateName { get => m_state_name_text; set => SetProperty(ref m_state_name_text, value); }
-        private void SetStateName(ELineGetState _s)
+        private void SetLineState(ELineGetState _s)
         {
             m_state = _s;
             StateName = "State: " + System.Enum.GetName(typeof(ELineGetState), m_state);
         }
 
+        private string m_centralized_position_text = "Centralized Position: ";
+        internal string CentralizedPositionText { get => m_centralized_position_text; set => SetProperty(ref m_centralized_position_text, value); }
+        /// <summary>
+        /// show centralized position: m_cx, m_cy
+        /// </summary>
+        private void SetCentralizedPositionText()
+        {
+            StringBuilder sb = new StringBuilder("Centralized Position: (");
+            sb.Append(m_cx.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(", ")
+                .Append(m_cy.ToString("F3", CultureInfo.InvariantCulture))
+                .Append(") ");
+            CentralizedPositionText = sb.ToString();
+            sb.Clear();
+        }
+
         private string m_world_position_text = "World Position: ";
         internal string WorldPositionText { get => m_world_position_text; set => SetProperty(ref m_world_position_text, value); }
+        /// <summary>
+        /// show world absolute position: m_absX, m_absY
+        /// </summary>
         private void SetWorldPositionText()
         {
             StringBuilder sb = new StringBuilder("World Position: (");
@@ -343,6 +519,9 @@ namespace DirectNXAML.ViewModels
 
         private string m_projected_position_text = "Projected Position: ";
         internal string ProjectedPositionText { get => m_projected_position_text; set => SetProperty(ref m_projected_position_text, value); }
+        /// <summary>
+        /// show projected postion: m_nowX, m_nowY
+        /// </summary>
         private void SetProjectedPositionText()
         {
             StringBuilder sb = new StringBuilder("Projected Position: (");

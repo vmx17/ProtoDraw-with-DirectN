@@ -3,9 +3,12 @@ using DirectNXAML.Renderers;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
+using static DirectNXAML.ViewModels.DirectNPage2ViewModel;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -39,7 +42,9 @@ namespace DirectNXAML.Views
                 {
                     throw new InvalidProgramException("Error at initializsizng renderer.");
                 }
+
                 viewModel.PageRenderer.SetSwapChainPanel(_scp);
+                viewModel.SetCursorMethods += new SetCursor(this.SetCursorPosition);
                 viewModel.SCPSize_Changed += viewModel.PageRenderer.Panel_SizeChanged;
                 viewModel.PageRenderer.StartRendering();
             }
@@ -51,8 +56,8 @@ namespace DirectNXAML.Views
         private void DirectNPage_Unloaded(object sender, RoutedEventArgs e)
         {
             viewModel.PageRenderer.StopRendering();
+            viewModel.SetCursorMethods -= new SetCursor(this.SetCursorPosition);
         }
-
         private void SetBG_White(object sender, RoutedEventArgs e)
         {
             viewModel.PageRenderer?.SetBGColor(1, 1, 1);
@@ -112,6 +117,36 @@ namespace DirectNXAML.Views
                 viewModel.ReleasedPoint = e.GetCurrentPoint(sender as SwapChainPanel).Position;
             }
             viewModel.ShaderPanel_PointerReleasedCommand.Execute(e);
+        }
+        private void SwapChainPanel_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
+        {
+            if (m_can_get_point)
+            {
+                var p = e.GetCurrentPoint(_scp);
+                var wdelta = p.Properties.MouseWheelDelta;
+                viewModel.MouseWheelDelta += wdelta;    // here is total
+                viewModel.ShaderPanel_PointerWheelChangedCommand.Execute(e); //here is delta
+            }
+        }
+
+        [DllImport("User32.dll", ExactSpelling = true, EntryPoint = "SetCursorPos", CharSet = CharSet.Unicode)]
+        public static extern bool MoveCursor(int X, int Y);
+        [DllImport("User32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern bool ClientToScreen(IntPtr hWnd, ref Windows.Graphics.PointInt32 lpPoint);
+        /// <summary>
+        /// Set cursor to specified position on SwawpChainPanel
+        /// </summary>
+        /// <param name="_x"></param>
+        /// <param name="_y"></param>
+        public void SetCursorPosition(int _x, int _y)
+        {
+            Windows.Graphics.PointInt32 pt = new Windows.Graphics.PointInt32(_x, _y);
+            ClientToScreen(((App)Application.Current).hWndCurrent, ref pt);
+            GeneralTransform gt = _scp.TransformToVisual((UIElement)this.Content);
+            Windows.Foundation.Point ptNew = gt.TransformPoint(new Windows.Foundation.Point(0, 0));
+            pt.X += (int)ptNew.X;
+            pt.Y += (int)ptNew.Y;
+            MoveCursor(pt.X, pt.Y);
         }
     }
 }

@@ -59,5 +59,7 @@ namespace DirectNXAML
                       ~(int)SetWindowLongFlags.WS_MAXIMIZEBOX));
         }
         private Window m_window;
+        public Window WindowCurrent { get => m_window; }    // window can be instanced prural times then this isnot static.
+        public IntPtr hWndCurrent { get => m_hwnd; }
     }
 }

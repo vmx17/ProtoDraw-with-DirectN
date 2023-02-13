@@ -21,8 +21,6 @@ namespace DirectNXAML.Renderers
 {
     public class Dx11Renderer2 : RendererBase
     {
-
-        private SwapChainPanel m_swapChainPanel = null;
         private IComObject<IDXGIDevice1> _dxgiDevice;
         private IComObject<ID3D11Device> _device;
         private IComObject<ID3D11DeviceContext> _deviceContext;
@@ -333,7 +331,7 @@ namespace DirectNXAML.Renderers
                 var view = XMMatrix.LookToRH(EyePosition, EyeDirection, UpDirection);
 
                 // projection matrix
-                XMMatrix orthographic = XMMatrix.OrthographicRH(m_width, m_height, m_nearZ, m_farZ);
+                XMMatrix orthographic = XMMatrix.OrthographicRH(m_width * m_viewScale, m_height * m_viewScale, m_nearZ, m_farZ);
 
                 //*
                 var f = view.ToArray();
