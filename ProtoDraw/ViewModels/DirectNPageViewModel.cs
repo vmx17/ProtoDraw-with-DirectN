@@ -5,9 +5,6 @@ using DirectNXAML.DrawData;
 using DirectNXAML.Helpers;
 using DirectNXAML.Model;
 using DirectNXAML.Renderers;
-using JeremyAnsel.DirectX.DXMath;
-using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.LinearAlgebra.Single;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
@@ -97,7 +94,6 @@ namespace DirectNXAML.ViewModels
 
         // for just a test drawing
         double m_nowX, m_nowY;  // position on local screen
-        MathNet.Numerics.LinearAlgebra.Matrix<Single> m_projection, m_inversedProjection;
         internal ICommand ShaderPanel_PointerPressedCommand { get; private set; }
         private void ShaderPanel_PointerPressed(PointerRoutedEventArgs args)
         {

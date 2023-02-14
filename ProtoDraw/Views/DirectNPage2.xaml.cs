@@ -140,10 +140,10 @@ namespace DirectNXAML.Views
         /// <param name="_y"></param>
         public void SetCursorPosition(int _x, int _y)
         {
-            Windows.Graphics.PointInt32 pt = new Windows.Graphics.PointInt32(_x, _y);
+            Windows.Graphics.PointInt32 pt = new Windows.Graphics.PointInt32(0, 0);
             ClientToScreen(((App)Application.Current).hWndCurrent, ref pt);
             GeneralTransform gt = _scp.TransformToVisual((UIElement)this.Content);
-            Windows.Foundation.Point ptNew = gt.TransformPoint(new Windows.Foundation.Point(0, 0));
+            Windows.Foundation.Point ptNew = gt.TransformPoint(new Windows.Foundation.Point(_x, _y));
             pt.X += (int)ptNew.X;
             pt.Y += (int)ptNew.Y;
             MoveCursor(pt.X, pt.Y);
