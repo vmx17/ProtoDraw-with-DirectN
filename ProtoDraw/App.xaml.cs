@@ -61,5 +61,8 @@ namespace DirectNXAML
         private Window m_window;
         public Window WindowCurrent { get => m_window; }    // window can be instanced prural times then this isnot static.
         public IntPtr hWndCurrent { get => m_hwnd; }
+
+        Windows.Graphics.PointInt32 m_main_content_frame_position;
+        public Windows.Graphics.PointInt32 FrameCurrent00 { get => m_main_content_frame_position; set => m_main_content_frame_position = value; }
     }
 }

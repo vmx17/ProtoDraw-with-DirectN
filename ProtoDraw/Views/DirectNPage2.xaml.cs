@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+using PInvoke;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -133,18 +134,22 @@ namespace DirectNXAML.Views
         public static extern bool MoveCursor(int X, int Y);
         [DllImport("User32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         public static extern bool ClientToScreen(IntPtr hWnd, ref Windows.Graphics.PointInt32 lpPoint);
+
         /// <summary>
         /// Set cursor to specified position on SwawpChainPanel
+        /// https://github.com/microsoft/microsoft-ui-xaml/issues/5897
+        /// This should do the trick when null is passed as the parameter: https://docs.microsoft.com/en-us/uwp/api/windows.ui.xaml.uielement.transformtovisual?view=winrt-20348
         /// </summary>
         /// <param name="_x"></param>
         /// <param name="_y"></param>
         public void SetCursorPosition(int _x, int _y)
         {
-            Windows.Graphics.PointInt32 pt = new Windows.Graphics.PointInt32(0, 0);
+            Windows.Graphics.PointInt32 pt = new Windows.Graphics.PointInt32(_x, _y);
             ClientToScreen(((App)Application.Current).hWndCurrent, ref pt);
-            GeneralTransform gt = _scp.TransformToVisual((UIElement)this.Content);
-            Windows.Foundation.Point ptNew = gt.TransformPoint(new Windows.Foundation.Point(_x, _y));
-            pt.X += (int)ptNew.X;
+            //GeneralTransform gt = _scp.TransformToVisual((UIElement)this.Content);
+            GeneralTransform gt = _scp.TransformToVisual(null); // <-- This is it!
+            Windows.Foundation.Point ptNew = gt.TransformPoint(new Windows.Foundation.Point(0, 0));
+            pt.X += (int)ptNew.X;// position of control swapchainpanel 321
             pt.Y += (int)ptNew.Y;
             MoveCursor(pt.X, pt.Y);
         }

@@ -15,6 +15,9 @@
   <ItemGroup>
     <Compile Remove="Model\CADInputStateMachine.cs" />
     <Compile Remove="Model\StateBase.cs" />
+    <Compile Remove="StateMachines\MasterStateContext.cs" />
+    <Compile Remove="StateMachines\StateBase.cs" />
+    <Compile Remove="StateMachines\StateContextBase.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="DirectNPage.xaml" />
@@ -96,6 +99,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Converters\" />
+    <Folder Include="StateMachines\" />
   </ItemGroup>
 
   <!-- 
