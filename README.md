@@ -5,7 +5,7 @@ Very thanks to [Simon Mourier](https://github.com/smourier) san.
 ## usage
 1. open in VisualStudio 2022 and restore NuGet packages.
 2. Invoke in Debug mode. If you hit trouble, please check the `Shader.hlsl` is copied to correct location and the code is in ASCII.
-3. select "Dx11Renderer2" page in navigation menu located in left pane. The page "Dx11Renderer" is no longer maintained.
+3. select "Dx11Renderer" page in navigation menu located in left pane.
 4. There should be appeared triangle. This is initial data in vertex array. (primitive is "Line list", not Triangle)
 5. (Don't forget to) ***Push [Draw Line]*** button on right pane. It starts tiny 'line add' state machine. To stop it, push [Select] button (the mouse picking has not been implemented, yet).
 6. In "line add" state machine, every mouse left click adds some vertex data (in float). The count of data is on right pane. A push and release left button add one line.
@@ -17,7 +17,6 @@ Very thanks to [Simon Mourier](https://github.com/smourier) san.
 - currently, seems no fatal errors.
 
 ## known bug
-- on clicking center button, the mouse cursor does not junp into center of SwapChainPanel.
 - changing windows size does not invoke swap chain resize. Repeating resizing action fix this.
 
 ## issue
