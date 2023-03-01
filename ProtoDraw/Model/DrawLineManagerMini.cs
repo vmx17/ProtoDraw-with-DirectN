@@ -4,17 +4,19 @@ using System.Linq;
 
 namespace DirectNXAML.Model
 {
-    public class SimpleDrawLineManager : DrawManagerBase
+    public class DrawLineManagerMini : DrawManagerBase
     {
         List<float> m_vertex_list;
         public override int VertexDataByteSize { get => m_vertex_data.Length * sizeof(float); }
+        public override int Length { get => m_vertex_data.Length; }
+        public override int Count { get => m_vertex_list.Count; }
         public override uint[] TextureData { get => s_textureData; }
 
         /// <summary>
         /// This class handles line segment vertex data and index data
         /// Constructor
         /// </summary>
-        public SimpleDrawLineManager()
+        public DrawLineManagerMini()
         {
             // dummy data. m_vertex_data should be re-made before every reference time
             m_vertex_data = new float[] {  // Vertex3D[]: pos[3], nor[3], tex[2], col[4]

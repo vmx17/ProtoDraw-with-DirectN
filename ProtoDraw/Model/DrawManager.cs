@@ -8,6 +8,8 @@ namespace DirectNXAML.Model
     {
         List<float> m_vertex_list;
         public override int VertexDataByteSize { get => m_vertex_data.Length * sizeof(float); }
+        public override int Length { get => m_vertex_data.Length; }
+        public override int Count { get => m_vertex_list.Count; }
         public override uint[] TextureData { get => s_textureData; }
 
         /// <summary>

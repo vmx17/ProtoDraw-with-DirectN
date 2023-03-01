@@ -19,7 +19,7 @@ using WinRT;
 
 namespace DirectNXAML.Renderers
 {
-    public class Dx11Renderer : RendererBase
+    public class Dx11RendererProto : RendererBase
     {
         private IComObject<IDXGIDevice1> _dxgiDevice;
         private IComObject<ID3D11Device> _device;
@@ -33,6 +33,7 @@ namespace DirectNXAML.Renderers
         private IComObject<ID3D11Buffer> _vertexBuffer;
         private IComObject<ID3D11InputLayout> _inputLayout;
         private IComObject<ID3D11VertexShader> _vertexShader;
+        private IComObject<ID3D11GeometryShader> _geometryShader;
         private IComObject<ID3D11PixelShader> _pixelShader;
         //private IComObject<ID3D11DepthStencilState> _depthStencilState;
         private IComObject<ID3D11ShaderResourceView> _shaderResourceView;
@@ -46,7 +47,7 @@ namespace DirectNXAML.Renderers
         /// Constructor
         /// </summary>
         /// <param name="_beginToStart"></param>
-        public Dx11Renderer(bool _beginToStart = false) : base()
+        public Dx11RendererProto(bool _beginToStart = false) : base()
         {
             ((App)Application.Current).DrawManager = new DrawManager();
             if (_beginToStart)
@@ -119,8 +120,8 @@ namespace DirectNXAML.Renderers
                 _device = D3D11Functions.D3D11CreateDevice(null, D3D_DRIVER_TYPE.D3D_DRIVER_TYPE_HARDWARE, flags, out _deviceContext);
 
                 var desc = new DXGI_SWAP_CHAIN_DESC1();
-                desc.Width = _width;
-                desc.Height = _height;
+                desc.Width = (uint)m_width;
+                desc.Height = (uint)m_height;
                 desc.Format = DXGI_FORMAT.DXGI_FORMAT_B8G8R8A8_UNORM;
                 desc.Stereo = false;
                 desc.SampleDesc.Count = 1;
@@ -159,7 +160,7 @@ namespace DirectNXAML.Renderers
                 _viewPort.MinDepth = 0.0f;
                 _viewPort.MaxDepth = 1.0f;
 
-                var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Shaders\\Shaders.hlsl");
+                var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Shaders.hlsl");
                 if (!File.Exists(path))
                 {
                     throw new FileNotFoundException("Shader file is not found at \"{0}\".", path);
@@ -174,6 +175,9 @@ namespace DirectNXAML.Renderers
                     new D3D11_INPUT_ELEMENT_DESC{ SemanticName = "COL", SemanticIndex = 0U, Format = DXGI_FORMAT.DXGI_FORMAT_R32G32B32A32_FLOAT,InputSlot = 0U, AlignedByteOffset = unchecked((uint)Constants.D3D11_APPEND_ALIGNED_ELEMENT),InputSlotClass = D3D11_INPUT_CLASSIFICATION.D3D11_INPUT_PER_VERTEX_DATA, InstanceDataStepRate = 0U },
                 };
                 _inputLayout = _device.CreateInputLayout(inputElements, vsBlob);
+
+                //var gsBlob = D3D11Functions.D3DCompileFromFile(path, "gs_main", "gs_5_0");
+                //_geometryShader=_device.CreateGeo
 
                 var psBlob = D3D11Functions.D3DCompileFromFile(path, "ps_main", "ps_5_0");
                 _pixelShader = _device.CreatePixelShader(psBlob);
@@ -318,14 +322,30 @@ namespace DirectNXAML.Renderers
             lock (m_CriticalLock)
             {
                 // transform matrix
+                // these are substantially constant
+                /*
+                var rotateX = D2D_MATRIX_4X4_F.RotationX(m_modelRotation.X);
+                var rotateY = D2D_MATRIX_4X4_F.RotationY(m_modelRotation.Y);
+                var rotateZ = D2D_MATRIX_4X4_F.RotationZ(m_modelRotation.Z);
+                var scale = D2D_MATRIX_4X4_F.Scale(m_modelScale.X, m_modelScale.Y, m_modelScale.Z);
+                var translate = D2D_MATRIX_4X4_F.Translation(m_modelTranslation.X, m_modelTranslation.Y, m_modelTranslation.Z);
+
+                var transform = rotateX * rotateY * rotateZ * scale * translate;
+                //*/
+
+                // transform matrix
                 var view = XMMatrix.LookToRH(EyePosition, EyeDirection, UpDirection);
 
                 // projection matrix
                 XMMatrix orthographic = XMMatrix.OrthographicRH(m_width * m_viewScale, m_height * m_viewScale, m_nearZ, m_farZ);
 
+                //*
                 var f = view.ToArray();
+                //var f = transform.ToArray();
                 m_transform = new D2D_MATRIX_4X4_F(f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7],
                     f[8], f[9], f[10], f[11], f[12], f[13], f[14], f[15]);
+                //*/
+                //m_projection = new D2D_MATRIX_4X4_F((2 * m_nearZ) / m_width, 0, 0, 0, 0, (2 * m_nearZ) / m_height, 0, 0, 0, 0, m_farZ / (m_farZ - m_nearZ), 1, 0, 0, (m_nearZ * m_farZ) / (m_nearZ - m_farZ), 0);
                 var p = orthographic.ToArray();
                 m_projection = new D2D_MATRIX_4X4_F(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
                     p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15]);
@@ -334,6 +354,7 @@ namespace DirectNXAML.Renderers
                     buffer.Transform = m_transform;
                     buffer.Projection = m_projection;
                     buffer.LightVector = new XMFLOAT3(0, 0, -1);    // direction of light, not position of light
+                    buffer.DefalutLineWidth = 2.0f;                 // Originally, this is for 16byte boudary padding
                 }
 
                 _deviceContext.WithMap<VS_CONSTANT_BUFFER>(_constantBuffer, 0, D3D11_MAP.D3D11_MAP_WRITE_DISCARD, mapAction);
@@ -439,8 +460,18 @@ namespace DirectNXAML.Renderers
             public D2D_MATRIX_4X4_F Transform;
             public D2D_MATRIX_4X4_F Projection;
             public XMFLOAT3 LightVector;
-            public float Padding; // to make sure it's 16-bytes aligned
+            public float DefalutLineWidth; // to make sure it's 16-bytes aligned
         };
 
+        // Utilities
+        public static XMVector GetProjectedPosition(in XMVector _pos, in XMMatrix _world, in XMMatrix _view, in XMMatrix _OrthographicRH_Perspective)
+        {
+            var projected = XMVector4.Transform(
+                XMVector4.Transform(
+                    XMVector4.Transform(_pos, _world),
+                    _view),
+                _OrthographicRH_Perspective);
+            return projected / projected.W; // XMVector.GetByIndex(projected, 3);
+        }
     }
 }

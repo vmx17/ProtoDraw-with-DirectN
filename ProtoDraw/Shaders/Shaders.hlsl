@@ -24,9 +24,6 @@ struct vs_out
     float4 color    : COL;
 };
 
-Texture2D    mytexture : register(t0);
-SamplerState mysampler : register(s0);
-
 vs_out vs_main(vs_in input)
 {
     float light = clamp(dot(normalize(mul(float4(input.normal, 0.0f), transform).xyz), normalize(-lightvector)), 0.0f, 1.0f) * 0.8f + 0.2f;
@@ -39,6 +36,9 @@ vs_out vs_main(vs_in input)
 
     return output;
 }
+
+Texture2D    mytexture : register(t0);
+SamplerState mysampler : register(s0);
 
 float4 ps_main(vs_out input) : SV_TARGET
 {

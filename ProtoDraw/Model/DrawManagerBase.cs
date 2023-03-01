@@ -15,6 +15,8 @@ namespace DirectNXAML.Model
         public virtual int VertexDataByteSize { get => m_vertex_data.Length * sizeof(float); }
         public abstract void AddLast(object _obj);
         public abstract void DelLast();
+        public virtual int Length { get => m_vertex_data.Length; }
+        public virtual int Count { get => m_vertex_data.Length; }
         public virtual uint[] TextureData { get => DrawManagerBase.s_textureData; }
         protected static uint[] s_textureData =
         {

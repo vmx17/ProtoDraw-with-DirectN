@@ -126,19 +126,15 @@ namespace DirectNXAML.ViewModels
             SetCentralizedPositionText();
             SetNormalizedPointerPosition();
             args.Handled = true;
+            m_absX = m_cX * m_viewScale - m_orgX;
+            m_absY = m_cY * m_viewScale - m_orgY;
+            SetWorldPositionText();
 
             // should elevate to Model layer
             if (m_state == ELineGetState.Pressed)
             {
                 if (m_left_pressed)
                 {
-                    // 2d translate (absolute: store data)
-                    //m_absX = (m_cX + (double)m_renderer.EyePosition.X) * (double)m_viewScale;
-                    //m_absY = (m_cY + (double)m_renderer.EyePosition.Y) * (double)m_viewScale;
-                    m_absX = m_cX * m_viewScale - m_orgX;
-                    m_absY = m_cY * m_viewScale - m_orgY;
-                    SetWorldPositionText();
-
                     ((App)Application.Current).DrawManager.DelLast();
                     m_lin.Ep.X = (float)m_absX;
                     m_lin.Ep.Y = (float)m_absY;
@@ -215,23 +211,22 @@ namespace DirectNXAML.ViewModels
             m_cX = m_released_point.X - ActualWidth / 2;
             m_cY = ActualHeight / 2 - m_released_point.Y;
             SetCentralizedPositionText();
+            // 2d translate (absolute: store data)
+            //m_absX = (m_cX + (double)m_renderer.EyePosition.X) * (double)m_viewScale;
+            //m_absY = (m_cY + (double)m_renderer.EyePosition.Y) * (double)m_viewScale;
+            m_absX = m_cX * m_viewScale - m_orgX;
+            m_absY = m_cY * m_viewScale - m_orgY;
+            SetWorldPositionText();
 
             // should elevate to Model layer
             if (m_state == ELineGetState.Pressed)
             {
                 ColorData.SetLine(ColorData.FixedLine);
 
-                // 2d translate (absolute: store data)
-                //m_absX = (m_cX + (double)m_renderer.EyePosition.X) * (double)m_viewScale;
-                //m_absY = (m_cY + (double)m_renderer.EyePosition.Y) * (double)m_viewScale;
-                m_absX = m_cX * m_viewScale - m_orgX;
-                m_absY = m_cY * m_viewScale - m_orgY;
-                SetWorldPositionText();
-
                 ((App)Application.Current).DrawManager.DelLast();
                 m_lin.Ep.X = (float)m_absX;
                 m_lin.Ep.Y = (float)m_absY;
-                m_lin.SetCol(ColorData.Line); // white : Rocked
+                m_lin.SetCol(ColorData.Line); // Rocked color
                 ((App)Application.Current).DrawManager.AddLast(m_lin);
                 SetLineText();
                 m_renderer.UpdateVertexBuffer();
@@ -409,6 +404,9 @@ namespace DirectNXAML.ViewModels
 
         string m_drawing_line_text = "Line: ";
         internal string LineText { get => m_drawing_line_text; set => SetProperty(ref m_drawing_line_text, value); }
+        /// <summary>
+        /// for line display in text
+        /// </summary>
         private void SetLineText()
         {
             StringBuilder sb = new StringBuilder("Line: (");

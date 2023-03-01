@@ -19,20 +19,22 @@ using WinRT;
 
 namespace DirectNXAML.Renderers
 {
-    public class Dx11Renderer : RendererBase
+    public class Dx11RendererMini : RendererBase
     {
-        private IComObject<IDXGIDevice1> _dxgiDevice;
+        private IComObject<IDXGIDevice1> _dxgiDevice;   // 仮想デバイス、リソースとオブジェクトの生成と管理
         private IComObject<ID3D11Device> _device;
-        private IComObject<ID3D11DeviceContext> _deviceContext;
-        private IComObject<IDXGISwapChain1> _swapChain;
-        private IComObject<ID3D11RenderTargetView> _renderTargetView;
-        private IComObject<ID3D11DepthStencilView> _depthStencilView;
-        private D3D11_VIEWPORT _viewPort;
+        private IComObject<ID3D11DeviceContext> _deviceContext; // デバイス使用時の環境や設定、レンダリングのための命令を生成
+        private IComObject<IDXGISwapChain1> _swapChain;         // バックバッファとフロントバッファを切り替えながら表示
+        private IComObject<ID3D11RenderTargetView> _renderTargetView;   // 描画対象であるバックバッファにバインドする。必ずしもレンダーターゲットビューである必要はないらしい。
+        private IComObject<ID3D11RasterizerState> _rasterizerState;
+        private IComObject<ID3D11DepthStencilView> _depthStencilView;   // 2次元画像に落とし込んだ時、オブジェクトの前後関係からどのピクセルを描画するかを判定するテストを行う。
+        private D3D11_VIEWPORT _viewPort;   // 実際に描画する範囲
 
-        private IComObject<ID3D11Buffer> _constantBuffer;
-        private IComObject<ID3D11Buffer> _vertexBuffer;
-        private IComObject<ID3D11InputLayout> _inputLayout;
+        private IComObject<ID3D11Buffer> _constantBuffer;   // 定数バッファ: 変換行列や高原など、GPUから見て定数と思われる数値を含んだバッファ。容量や使い方に制限あるが速い。
+        private IComObject<ID3D11Buffer> _vertexBuffer;     // 頂点バッファ
+        private IComObject<ID3D11InputLayout> _inputLayout; // シェーダーに渡す頂点情報のレイアウトを定義。一種の構造体の構造を示す。
         private IComObject<ID3D11VertexShader> _vertexShader;
+        private IComObject<ID3D10GeometryShader> _geometryShader;
         private IComObject<ID3D11PixelShader> _pixelShader;
         //private IComObject<ID3D11DepthStencilState> _depthStencilState;
         private IComObject<ID3D11ShaderResourceView> _shaderResourceView;
@@ -46,9 +48,9 @@ namespace DirectNXAML.Renderers
         /// Constructor
         /// </summary>
         /// <param name="_beginToStart"></param>
-        public Dx11Renderer(bool _beginToStart = false) : base()
+        public Dx11RendererMini(bool _beginToStart = false) : base()
         {
-            ((App)Application.Current).DrawManager = new DrawManager();
+            ((App)Application.Current).DrawManager = new DrawLineManagerMini();
             if (_beginToStart)
             {
                 Microsoft.UI.Xaml.Media.CompositionTarget.Rendering += CompositionTarget_Rendering;
@@ -59,10 +61,16 @@ namespace DirectNXAML.Renderers
             StopRendering();
             CleanUp();
         }
+        /// <summary>
+        /// just add "CompositionTarget_Rendering" handler to render event
+        /// </summary>
         public override void StartRendering()
         {
             Microsoft.UI.Xaml.Media.CompositionTarget.Rendering += CompositionTarget_Rendering;
         }
+        /// <summary>
+        /// just remove "CompositionTarget_Rendering" handler from render event
+        /// </summary>
         public override void StopRendering()
         {
             Microsoft.UI.Xaml.Media.CompositionTarget.Rendering -= CompositionTarget_Rendering;
@@ -114,13 +122,26 @@ namespace DirectNXAML.Renderers
             {
                 m_width = _width;
                 m_height = _height;
+
+                // create device
+                DXGI_SWAP_CHAIN_DESC1 desc = new DXGI_SWAP_CHAIN_DESC1();
+                desc.Width = _width;
+                desc.Height = _height;
+                desc.Format = DXGI_FORMAT.DXGI_FORMAT_B8G8R8A8_UNORM;
+                desc.Stereo = false;
+                desc.SampleDesc.Count = 1;
+                desc.SampleDesc.Quality = 0;
+                desc.BufferUsage = Constants.DXGI_USAGE_RENDER_TARGET_OUTPUT;
+                desc.BufferCount = 2;
+                desc.Scaling = DXGI_SCALING.DXGI_SCALING_STRETCH;
+                desc.SwapEffect = DXGI_SWAP_EFFECT.DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+                desc.AlphaMode = DXGI_ALPHA_MODE.DXGI_ALPHA_MODE_UNSPECIFIED;
+                desc.Flags = 0;
                 var fac = DXGIFunctions.CreateDXGIFactory2(DXGI_CREATE_FACTORY_FLAGS.DXGI_CREATE_FACTORY_DEBUG);
                 var flags = D3D11_CREATE_DEVICE_FLAG.D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_FLAG.D3D11_CREATE_DEVICE_DEBUG;
                 _device = D3D11Functions.D3D11CreateDevice(null, D3D_DRIVER_TYPE.D3D_DRIVER_TYPE_HARDWARE, flags, out _deviceContext);
 
-                var desc = new DXGI_SWAP_CHAIN_DESC1();
-                desc.Width = _width;
-                desc.Height = _height;
+                // create dxgi device to create swap chain
                 desc.Format = DXGI_FORMAT.DXGI_FORMAT_B8G8R8A8_UNORM;
                 desc.Stereo = false;
                 desc.SampleDesc.Count = 1;
@@ -137,10 +158,12 @@ namespace DirectNXAML.Renderers
 
                 _swapChain = fac.CreateSwapChainForComposition<IDXGISwapChain1>(_dxgiDevice, desc);
 
-                
-                var frameBuffer = _swapChain.GetBuffer<ID3D11Texture2D>(0);
+                // create render target view
+                var frameBuffer = _swapChain.GetBuffer<ID3D11Texture2D>(0u);
                 _renderTargetView = _device.CreateRenderTargetView(frameBuffer);
 
+
+                // create depth buffer
                 frameBuffer.Object.GetDesc(out var depthBufferDesc);
                 m_width = depthBufferDesc.Width;    // meanless
                 m_height = depthBufferDesc.Height;
@@ -152,6 +175,23 @@ namespace DirectNXAML.Renderers
 
                 _depthStencilView = _device.CreateDepthStencilView(depthBuffer);
 
+                // create rasterizer (not used)
+                var rdesc = new D3D11_RASTERIZER_DESC();
+                rdesc.FillMode = D3D11_FILL_MODE.D3D11_FILL_SOLID;
+                rdesc.CullMode = D3D11_CULL_MODE.D3D11_CULL_BACK;
+                rdesc.FrontCounterClockwise = true;
+                rdesc.DepthBias = 0;
+                rdesc.DepthBiasClamp = 0.0f;
+                rdesc.SlopeScaledDepthBias = 0.0f;
+                rdesc.DepthClipEnable = true;
+                rdesc.ScissorEnable = false;
+                rdesc.MultisampleEnable = false;
+                rdesc.AntialiasedLineEnable = false;
+                _rasterizerState = _device.CreateRasterizerState(rdesc);
+
+                // set depth/stencil texture as render target (no need?)
+                _deviceContext.OMSetRenderTarget(_renderTargetView, _depthStencilView);
+
                 _viewPort.TopLeftX = 0.0f;
                 _viewPort.TopLeftY = 0.0f;
                 _viewPort.Width = m_width;
@@ -159,7 +199,10 @@ namespace DirectNXAML.Renderers
                 _viewPort.MinDepth = 0.0f;
                 _viewPort.MaxDepth = 1.0f;
 
-                var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Shaders\\Shaders.hlsl");
+                // no need?
+                _deviceContext.RSSetViewport(_viewPort);
+
+                var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Shaders.hlsl");
                 if (!File.Exists(path))
                 {
                     throw new FileNotFoundException("Shader file is not found at \"{0}\".", path);
@@ -167,24 +210,21 @@ namespace DirectNXAML.Renderers
                 var vsBlob = D3D11Functions.D3DCompileFromFile(path, "vs_main", "vs_5_0");
                 _vertexShader = _device.CreateVertexShader(vsBlob);
 
+                // AlignedByteOffset = unchecked((uint)Constants.D3D11_APPEND_ALIGNED_ELEMENT)は、前のデータの直後、を示す。
                 var inputElements = new D3D11_INPUT_ELEMENT_DESC[] {
                     new D3D11_INPUT_ELEMENT_DESC{ SemanticName = "POS", SemanticIndex = 0U, Format = DXGI_FORMAT.DXGI_FORMAT_R32G32B32_FLOAT,   InputSlot = 0U, AlignedByteOffset = 0U,                                                     InputSlotClass = D3D11_INPUT_CLASSIFICATION.D3D11_INPUT_PER_VERTEX_DATA, InstanceDataStepRate = 0U },
                     new D3D11_INPUT_ELEMENT_DESC{ SemanticName = "NOR", SemanticIndex = 0U, Format = DXGI_FORMAT.DXGI_FORMAT_R32G32B32_FLOAT,   InputSlot = 0U, AlignedByteOffset = unchecked((uint)Constants.D3D11_APPEND_ALIGNED_ELEMENT),InputSlotClass = D3D11_INPUT_CLASSIFICATION.D3D11_INPUT_PER_VERTEX_DATA, InstanceDataStepRate = 0U },
                     new D3D11_INPUT_ELEMENT_DESC{ SemanticName = "TEX", SemanticIndex = 0U, Format = DXGI_FORMAT.DXGI_FORMAT_R32G32_FLOAT,      InputSlot = 0U, AlignedByteOffset = unchecked((uint)Constants.D3D11_APPEND_ALIGNED_ELEMENT),InputSlotClass = D3D11_INPUT_CLASSIFICATION.D3D11_INPUT_PER_VERTEX_DATA, InstanceDataStepRate = 0U },
                     new D3D11_INPUT_ELEMENT_DESC{ SemanticName = "COL", SemanticIndex = 0U, Format = DXGI_FORMAT.DXGI_FORMAT_R32G32B32A32_FLOAT,InputSlot = 0U, AlignedByteOffset = unchecked((uint)Constants.D3D11_APPEND_ALIGNED_ELEMENT),InputSlotClass = D3D11_INPUT_CLASSIFICATION.D3D11_INPUT_PER_VERTEX_DATA, InstanceDataStepRate = 0U },
+                    //new D3D11_INPUT_ELEMENT_DESC{ SemanticName = "THICKNESS", SemanticIndex = 0U, Format = DXGI_FORMAT.DXGI_FORMAT_R32_FLOAT         ,InputSlot = 0U, AlignedByteOffset = unchecked((uint)Constants.D3D11_APPEND_ALIGNED_ELEMENT),InputSlotClass = D3D11_INPUT_CLASSIFICATION.D3D11_INPUT_PER_VERTEX_DATA, InstanceDataStepRate = 0U },
                 };
+
                 _inputLayout = _device.CreateInputLayout(inputElements, vsBlob);
 
                 var psBlob = D3D11Functions.D3DCompileFromFile(path, "ps_main", "ps_5_0");
                 _pixelShader = _device.CreatePixelShader(psBlob);
 
-                /*var depthStencilDesc = new D3D11_DEPTH_STENCIL_DESC();
-                depthStencilDesc.DepthEnable = true;
-                depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK.D3D11_DEPTH_WRITE_MASK_ALL;
-                depthStencilDesc.DepthFunc = D3D11_COMPARISON_FUNC.D3D11_COMPARISON_LESS;
-                _depthStencilState = _device.CreateDepthStencilState(depthStencilDesc);
-                //*/
-
+                // create constant buffer
                 var constantBufferDesc = new D3D11_BUFFER_DESC();
                 constantBufferDesc.ByteWidth = (uint)Marshal.SizeOf<VS_CONSTANT_BUFFER>();
                 constantBufferDesc.Usage = D3D11_USAGE.D3D11_USAGE_DYNAMIC;
@@ -237,6 +277,7 @@ namespace DirectNXAML.Renderers
                 _shaderResourceView = _device.CreateShaderResourceView(texture);
             }
         }
+
         #endregion
 
         #region SetSwapChain link to XAML
@@ -318,14 +359,28 @@ namespace DirectNXAML.Renderers
             lock (m_CriticalLock)
             {
                 // transform matrix
+                // these are substantially constant
+                var rotateX = D2D_MATRIX_4X4_F.RotationX(m_modelRotation.X);
+                var rotateY = D2D_MATRIX_4X4_F.RotationY(m_modelRotation.Y);
+                var rotateZ = D2D_MATRIX_4X4_F.RotationZ(m_modelRotation.Z);
+                var scale = D2D_MATRIX_4X4_F.Scale(m_modelScale.X, m_modelScale.Y, m_modelScale.Z);
+                var translate = D2D_MATRIX_4X4_F.Translation(m_modelTranslation.X, m_modelTranslation.Y, m_modelTranslation.Z);
+
+                var transform = rotateX * rotateY * rotateZ * scale * translate;
+                
+                //var view = XMMatrix.LookAtLH(EyePosition, ForcusPosition, UpDirection);
                 var view = XMMatrix.LookToRH(EyePosition, EyeDirection, UpDirection);
 
                 // projection matrix
                 XMMatrix orthographic = XMMatrix.OrthographicRH(m_width * m_viewScale, m_height * m_viewScale, m_nearZ, m_farZ);
 
+                //*
                 var f = view.ToArray();
+                //var f = transform.ToArray();
                 m_transform = new D2D_MATRIX_4X4_F(f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7],
                     f[8], f[9], f[10], f[11], f[12], f[13], f[14], f[15]);
+                //*/
+                //m_projection = new D2D_MATRIX_4X4_F((2 * m_nearZ) / m_width, 0, 0, 0, 0, (2 * m_nearZ) / m_height, 0, 0, 0, 0, m_farZ / (m_farZ - m_nearZ), 1, 0, 0, (m_nearZ * m_farZ) / (m_nearZ - m_farZ), 0);
                 var p = orthographic.ToArray();
                 m_projection = new D2D_MATRIX_4X4_F(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7],
                     p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15]);
