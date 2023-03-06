@@ -1,40 +1,32 @@
-struct vertexIn
+cbuffer constants : register(b0)    // constant buffer name start with 'b'
 {
-    float3 pos : POSITION0;
-    float4 col : COLOR0;
-    float2 tex : TEXCOORD0;
-};
-
-struct vertexOut
-{
-    float4 pos : SV_POSITION;
-    float4 col : COLOR;
-    float2 tex : TEXCOORD0;
-};
-
-cbuffer ConstantBuffer : register(b0)
-{
-    matrix View;
-    matrix Projection;
+    row_major float4x4 transform;
+    row_major float4x4 projection;
+    row_major float4x4 world;
 }
 
-cbuffer ObjectBuffer : register(b1)
+struct vs_in    // vertex shadedr input
 {
-    matrix World;
-    matrix NormalWorld;
-}
+    float3 position : POSITION;
+    float4 color    : COLOR;
+    float thick : THICKNESS;
+};
 
-vertexOut main(vertexIn IN)
+struct gs_in    // vs_out, geometry shader input
 {
-    vertexOut OUT;
+    float4 position : SV_POSITION;  // AXIS
+    float4 color    : COLOR;
+    float thick : THICKNESS;
+};
 
-    float4 pos = float4(IN.pos, 1.0f);
-    pos = mul(pos, World);
-    pos = mul(pos, View);
-    pos = mul(pos, Projection);
-    OUT.pos = pos;
-    OUT.col = IN.col;
-    OUT.tex = IN.tex;
+// vertex shader
+gs_in main(vs_in input)
+{
+    gs_in output;
 
-    return OUT;
+    output.position = mul(float4(input.position, 1.0f), mul(transform, projection));
+    output.color = float4(input.color.rgb, input.color.a);
+    output.thick = input.thick;
+
+    return output;
 }

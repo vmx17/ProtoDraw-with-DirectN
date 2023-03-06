@@ -275,7 +275,7 @@ namespace DirectNXAML.ViewModels
         private double m_viewScale = 1.0;
         private void SetWheelScale()
         {
-            double d = Math.Round(1.0 - (double)m_mouse_wheel_delta / 1000.0, 3, MidpointRounding.AwayFromZero);
+            double d = Math.Round(1.0 - (double)(m_mouse_wheel_delta/120) / 100.0, 2, MidpointRounding.AwayFromZero);
             m_viewScale = (d <= 0.001) ? 0.001 : d;
             m_renderer.ViewScale = (float)m_viewScale;
             SetViewScaleText();
@@ -334,13 +334,13 @@ namespace DirectNXAML.ViewModels
         }
 
         int m_vertex_count = 0;
-        private string m_vertex_count_text = "Number of Vertecies: ";
+        private string m_vertex_count_text = "Number of Vertices: ";
         internal string VertexCountText { get => m_vertex_count_text; set => SetProperty(ref m_vertex_count_text, value); }
         public int VertexCount { get => m_vertex_count; set => SetProperty(ref m_vertex_count, value); }
         private void UpdateVertexCountDisplay()
         {
             VertexCount = ((App)Application.Current).DrawManager.VertexData.Length;
-            VertexCountText = "Number of Vertecies: " + VertexCount.ToString();
+            VertexCountText = "Number of Vertices: " + VertexCount.ToString();
         }
 
         private string m_actual_size_text = "SCP Actual size (W x H): ";

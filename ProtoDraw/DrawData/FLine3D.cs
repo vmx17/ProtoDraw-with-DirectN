@@ -5,7 +5,7 @@ namespace DirectNXAML.DrawData
 {
     public class FLine3D : Primitive
     {
-        public new static readonly int Stride = FVertex3D.Stride * 2; // FLine3D have two vertecies and thickness
+        public new static readonly int Stride = FVertex3D.Stride * 2; // FLine3D have two Vertices and thickness
         private FVertex3D m_sp, m_ep;
         public FVertex3D Sp { get => m_sp; set => m_sp = value; }
         public FVertex3D Ep { get => m_ep; set => m_ep = value; }

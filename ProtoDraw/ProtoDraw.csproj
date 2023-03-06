@@ -14,7 +14,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Model\CADInputStateMachine.cs" />
+    <Compile Remove="Model\DrawLineManagerMini.cs" />
+    <Compile Remove="Model\DrawManagerBaseBK.cs" />
     <Compile Remove="Model\StateBase.cs" />
+    <Compile Remove="Renderers\Dx11RendererMini.cs" />
+    <Compile Remove="Renderers\Dx11RendererProto.cs" />
     <Compile Remove="StateMachines\MasterStateContext.cs" />
     <Compile Remove="StateMachines\StateBase.cs" />
     <Compile Remove="StateMachines\StateContextBase.cs" />
@@ -51,6 +55,13 @@
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.755" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" Version="2.0.9" />
     <PackageReference Include="PInvoke.User32" Version="0.7.124" />
+    <PackageReference Include="SharpDX" Version="4.2.0" />
+    <PackageReference Include="SharpDX.D3DCompiler" Version="4.2.0" />
+    <PackageReference Include="SharpDX.Direct2D1" Version="4.2.0" />
+    <PackageReference Include="SharpDX.Direct3D11" Version="4.2.0" />
+    <PackageReference Include="SharpDX.Direct3D12" Version="4.2.0" />
+    <PackageReference Include="SharpDX.DXGI" Version="4.2.0" />
+    <PackageReference Include="SharpDX.Mathematics" Version="4.2.0" />
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
 
@@ -91,6 +102,26 @@
   <ItemGroup>
     <Folder Include="Converters\" />
     <Folder Include="StateMachines\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Shaders\LineVertexShader.hlsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\MinVertexShader.hlsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\PixelShader.hlsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\GeometryShader.hlsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\Shaders.hlsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Shaders\VertexShader.hlsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <!-- 

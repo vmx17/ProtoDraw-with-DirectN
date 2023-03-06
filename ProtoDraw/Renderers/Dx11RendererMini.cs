@@ -242,7 +242,7 @@ namespace DirectNXAML.Renderers
 
                 // consider to use static buffer if it short memory.
                 vertexBufferDesc.ByteWidth = (uint)((App)Application.Current).DrawManager.VertexData.SizeOf() + 144;
-                // 2358 = 14148 vertecies(x6) = 169776byte (x12) limit of Intel Celeron J4125
+                // 2358 = 14148 vertices(x6) = 169776byte (x12) limit of Intel Celeron J4125
                 //vertexBufferDesc.ByteWidth = (uint)((App)Application.Current).DrawManager.VertexData.SizeOf() * 2358;
                 vertexBufferDesc.Usage = D3D11_USAGE.D3D11_USAGE_DYNAMIC;
                 vertexBufferDesc.BindFlags = (uint)D3D11_BIND_FLAG.D3D11_BIND_VERTEX_BUFFER;

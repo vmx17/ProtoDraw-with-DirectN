@@ -1,11 +1,11 @@
-struct pixcelIn
+struct ps_in
 {
     float4 pos : SV_POSITION;
-    float4 col : COLOR;
-    float2 tex : TEXCOORD0;
+    float4 color : COLOR;
+    //float3 nor : NORMAL;
 };
 
-float4 main(pixcelIn IN) : SV_Target
+float4 main(ps_in input) : SV_TARGET
 {
-    return IN.col;
+    return float4(input.color.xyz, input.color.w);
 }

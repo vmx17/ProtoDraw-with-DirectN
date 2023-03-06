@@ -10,7 +10,6 @@ namespace DirectNXAML.Model
         public override int VertexDataByteSize { get => m_vertex_data.Length * sizeof(float); }
         public override int Length { get => m_vertex_data.Length; }
         public override int Count { get => m_vertex_list.Count; }
-        public override uint[] TextureData { get => s_textureData; }
 
         /// <summary>
         /// This class handles line segment vertex data and index data
@@ -19,17 +18,17 @@ namespace DirectNXAML.Model
         public DrawManager()
         {
             // dummy data. m_vertex_data should be re-made before every reference time
-            m_vertex_data = new float[] {  // Vertex3D[]: pos[3], nor[3], tex[2], col[4]
-                  0.0f, -30000f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,    0.4f, 0.4f, 0.4f, 0.4f,
-                  0.0f,  30000f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,    0.4f, 0.4f, 0.4f, 0.4f,
-               -30000f,    0.0f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,    0.4f, 0.4f, 0.4f, 0.4f,
-                30000f,    0.0f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,    0.4f, 0.4f, 0.4f, 0.4f,
-               -100.0f, -100.0f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,    0.0f, 1.0f, 1.0f, 1.0f,
-                  0.0f,  100.0f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,    1.0f, 0.0f, 1.0f, 1.0f,
-                  0.0f,  100.0f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,    1.0f, 0.0f, 1.0f, 1.0f,
-                100.0f, -100.0f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,    1.0f, 1.0f, 0.0f, 1.0f,
-                100.0f, -100.0f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,    1.0f, 1.0f, 0.0f, 1.0f,
-               -100.0f, -100.0f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,    0.0f, 1.0f, 1.0f, 1.0f,
+            m_vertex_data = new float[] {  // Vertex3D[]: pos[3], col[4], thickness
+                  0.0f, -30000f, 0.0f,  0.4f, 0.4f, 0.4f, 0.4f, 2.0f,
+                  0.0f,  30000f, 0.0f,  0.4f, 0.4f, 0.4f, 0.4f, 2.0f,
+               -30000f,    0.0f, 0.0f,  0.4f, 0.4f, 0.4f, 0.4f, 2.0f,
+                30000f,    0.0f, 0.0f,  0.4f, 0.4f, 0.4f, 0.4f, 2.0f,
+               -100.0f, -100.0f, 0.0f,  0.0f, 1.0f, 1.0f, 1.0f, 6.0f,
+                  0.0f,  100.0f, 0.0f,  1.0f, 0.0f, 1.0f, 1.0f, 6.0f,
+                  0.0f,  100.0f, 0.0f,  1.0f, 0.0f, 1.0f, 1.0f, 6.0f,
+                100.0f, -100.0f, 0.0f,  1.0f, 1.0f, 0.0f, 1.0f, 6.0f,
+                100.0f, -100.0f, 0.0f,  1.0f, 1.0f, 0.0f, 1.0f, 2.0f,
+               -100.0f, -100.0f, 0.0f,  0.0f, 1.0f, 1.0f, 1.0f, 2.0f,
             };
             m_vertex_list = m_vertex_data.ToList(); // only initialized
         }
