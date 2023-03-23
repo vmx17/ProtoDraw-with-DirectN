@@ -108,7 +108,7 @@ namespace DirectNXAML.Renderers
         }
 
         #region Initialize
-        public override void Initialize(uint _width = 1024, uint _height = 1024)
+        public override void Initialize(uint _width = 1366, uint _height = 768)
         {
             lock (m_CriticalLock)
             {
@@ -168,10 +168,11 @@ namespace DirectNXAML.Renderers
                 _vertexShader = m_device.CreateVertexShader(vsBlob);
 
                 var inputElements = new D3D11_INPUT_ELEMENT_DESC[] {
-                    new D3D11_INPUT_ELEMENT_DESC{ SemanticName = "POS", SemanticIndex = 0U, Format = DXGI_FORMAT.DXGI_FORMAT_R32G32B32_FLOAT,   InputSlot = 0U, AlignedByteOffset = 0U,                                                     InputSlotClass = D3D11_INPUT_CLASSIFICATION.D3D11_INPUT_PER_VERTEX_DATA, InstanceDataStepRate = 0U },
-                    new D3D11_INPUT_ELEMENT_DESC{ SemanticName = "NOR", SemanticIndex = 0U, Format = DXGI_FORMAT.DXGI_FORMAT_R32G32B32_FLOAT,   InputSlot = 0U, AlignedByteOffset = unchecked((uint)Constants.D3D11_APPEND_ALIGNED_ELEMENT),InputSlotClass = D3D11_INPUT_CLASSIFICATION.D3D11_INPUT_PER_VERTEX_DATA, InstanceDataStepRate = 0U },
-                    new D3D11_INPUT_ELEMENT_DESC{ SemanticName = "TEX", SemanticIndex = 0U, Format = DXGI_FORMAT.DXGI_FORMAT_R32G32_FLOAT,      InputSlot = 0U, AlignedByteOffset = unchecked((uint)Constants.D3D11_APPEND_ALIGNED_ELEMENT),InputSlotClass = D3D11_INPUT_CLASSIFICATION.D3D11_INPUT_PER_VERTEX_DATA, InstanceDataStepRate = 0U },
-                    new D3D11_INPUT_ELEMENT_DESC{ SemanticName = "COL", SemanticIndex = 0U, Format = DXGI_FORMAT.DXGI_FORMAT_R32G32B32A32_FLOAT,InputSlot = 0U, AlignedByteOffset = unchecked((uint)Constants.D3D11_APPEND_ALIGNED_ELEMENT),InputSlotClass = D3D11_INPUT_CLASSIFICATION.D3D11_INPUT_PER_VERTEX_DATA, InstanceDataStepRate = 0U },
+                    new D3D11_INPUT_ELEMENT_DESC{ SemanticName = "POS",     SemanticIndex = 0U, Format = DXGI_FORMAT.DXGI_FORMAT_R32G32B32_FLOAT,   InputSlot = 0U, AlignedByteOffset = 0U,                                                     InputSlotClass = D3D11_INPUT_CLASSIFICATION.D3D11_INPUT_PER_VERTEX_DATA, InstanceDataStepRate = 0U },
+                    new D3D11_INPUT_ELEMENT_DESC{ SemanticName = "NOR",     SemanticIndex = 0U, Format = DXGI_FORMAT.DXGI_FORMAT_R32G32B32_FLOAT,   InputSlot = 0U, AlignedByteOffset = unchecked((uint)Constants.D3D11_APPEND_ALIGNED_ELEMENT),InputSlotClass = D3D11_INPUT_CLASSIFICATION.D3D11_INPUT_PER_VERTEX_DATA, InstanceDataStepRate = 0U },
+                    new D3D11_INPUT_ELEMENT_DESC{ SemanticName = "TEX",     SemanticIndex = 0U, Format = DXGI_FORMAT.DXGI_FORMAT_R32G32_FLOAT,      InputSlot = 0U, AlignedByteOffset = unchecked((uint)Constants.D3D11_APPEND_ALIGNED_ELEMENT),InputSlotClass = D3D11_INPUT_CLASSIFICATION.D3D11_INPUT_PER_VERTEX_DATA, InstanceDataStepRate = 0U },
+                    new D3D11_INPUT_ELEMENT_DESC{ SemanticName = "COL",     SemanticIndex = 0U, Format = DXGI_FORMAT.DXGI_FORMAT_R32G32B32A32_FLOAT,InputSlot = 0U, AlignedByteOffset = unchecked((uint)Constants.D3D11_APPEND_ALIGNED_ELEMENT),InputSlotClass = D3D11_INPUT_CLASSIFICATION.D3D11_INPUT_PER_VERTEX_DATA, InstanceDataStepRate = 0U },
+                    new D3D11_INPUT_ELEMENT_DESC{ SemanticName = "THICK",   SemanticIndex = 0U, Format = DXGI_FORMAT.DXGI_FORMAT_R32_FLOAT,         InputSlot = 0U, AlignedByteOffset = unchecked((uint)Constants.D3D11_APPEND_ALIGNED_ELEMENT),InputSlotClass = D3D11_INPUT_CLASSIFICATION.D3D11_INPUT_PER_VERTEX_DATA, InstanceDataStepRate = 0U },
                 };
                 _inputLayout = m_device.CreateInputLayout(inputElements, vsBlob);
 
@@ -357,7 +358,7 @@ namespace DirectNXAML.Renderers
 
                 m_deviceContext.WithMap<VS_CONSTANT_BUFFER>(m_constantBuffer, 0, D3D11_MAP.D3D11_MAP_WRITE_DISCARD, mapAction);
 
-                uint stride = (uint)FVertex3D.Stride * sizeof(float); // vertex size (12 floats: Vector3 position, Vector3 normal, Vector2 texcoord, Vector4 color)
+                uint stride = (uint)FVertex3D.Stride * sizeof(float); // vertex size (13 floats: Vector3 position, Vector3 normal, Vector2 texcoord, Vector4 color, float thickness)
                 uint offset = 0;
 
                 m_deviceContext.Object.ClearRenderTargetView(m_renderTargetView.Object, m_renderBackgroundColor);

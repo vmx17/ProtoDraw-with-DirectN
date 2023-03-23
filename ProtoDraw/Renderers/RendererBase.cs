@@ -53,7 +53,6 @@ namespace DirectNXAML.Renderers
             }
             StartRendering();
         }
-
         protected float m_viewScale = 1.0f;
         public virtual float ViewScale { get => m_viewScale; set => m_viewScale = value; }
 

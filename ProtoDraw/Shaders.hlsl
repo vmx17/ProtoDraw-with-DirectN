@@ -15,6 +15,7 @@ struct vs_in
     float3 normal   : NOR;
     float2 texcoord : TEX;
     float4 color    : COL;
+    float  thick    : THICK;
 };
 
 struct vs_out
@@ -22,6 +23,7 @@ struct vs_out
     float4 position : SV_POSITION;
     float2 texcoord : TEX;
     float4 color    : COL;
+    float  thick    : THICK;
 };
 
 Texture2D    mytexture : register(t0);
@@ -36,7 +38,7 @@ vs_out vs_main(vs_in input)
     output.position = mul(float4(input.position, 1.0f), mul(transform, projection));
     output.texcoord = input.texcoord;
     output.color = float4(input.color.rgb * light, input.color.a);
-
+    output.thick = input.thick;
     return output;
 }
 
