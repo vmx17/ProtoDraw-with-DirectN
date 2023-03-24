@@ -6,6 +6,8 @@
 	xmlns:vm="using:DirectNXAML.ViewModels"
 	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:interactivity="using:Microsoft.Xaml.Interactivity"
+    xmlns:core="using:Microsoft.Xaml.Interactions.Core"
 	mc:Ignorable="d"
 	Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
   
@@ -14,13 +16,17 @@
 	<Page.DataContext>
 		<vm:DirectNPageViewModel x:Name="viewModel"/>
 	</Page.DataContext>
-    
+    <!--interactivity:Interaction.Behaviors>
+        <core:EventTriggerBehavior EventName="PointerWheelChanged" SourceObject="{Binding ElementName=_scp}">
+            <core:InvokeCommandAction Command="{x:Bind viewModel.ShaderPanel_PointerWheelChangedCommand}"/>
+        </core:EventTriggerBehavior>
+    </interactivity:Interaction.Behaviors-->
     <Grid x:Name="_scpGrid" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" >
 		<Grid.ColumnDefinitions>
 			<ColumnDefinition Width="3*"/>
 			<ColumnDefinition Width="1*"/>
 		</Grid.ColumnDefinitions>
-		<SwapChainPanel Grid.Column="0"
+        <SwapChainPanel Grid.Column="0"
 						x:Name="_scp"
 						x:FieldModifier="internal"
 						Margin="0,0,0,0"
@@ -31,19 +37,27 @@
 						SizeChanged="SwapChainPanel_SizeChanged"
 						PointerMoved="SwapChainPanel_PointerMoved"
 						PointerPressed="SwapChainPanel_PointerPressed"
-						PointerReleased="SwapChainPanel_PointerReleased">
-		</SwapChainPanel>
-		<StackPanel Grid.Column="1">
-			<Button Content="White" Click="SetBG_White"/>
-            <Button Content="Black" Click="SetBG_Black"/>
-            <Button x:Name="LineSegmentModeBtn" Content="Draw Line" Click="{x:Bind viewModel.SetState_DrawLineCommand}"/>
-            <Button x:Name="SelectModeBtn" Content="Select" Click="{x:Bind viewModel.SetState_SelectCommand}"/>
+						PointerReleased="SwapChainPanel_PointerReleased"
+                        PointerWheelChanged="SwapChainPanel_PointerWheelChanged"/>
+
+        <StackPanel Grid.Column="1">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                <Button Content="White" Click="SetBG_White" />
+                <Button Content="Black" Click="SetBG_Black" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                <Button x:Name="SelectModeBtn" Content="Select" Click="{x:Bind viewModel.SetState_SelectCommand}"/>
+                <Button x:Name="LineSegmentModeBtn" Content="Draw Line" Click="{x:Bind viewModel.SetState_DrawLineCommand}"/>
+            </StackPanel>
             <TextBlock x:Name="State" Text="{x:Bind viewModel.StateName, Mode=OneWay}" />
             <TextBlock x:Name="Vertecies" Text="{x:Bind viewModel.VertexCountText, Mode=OneWay}" />
             <TextBlock x:Name="SCPSize" Text="{x:Bind viewModel.ActualSizeText, Mode=OneWay}" />
-            <TextBlock x:Name="LocalSize" Text="{x:Bind viewModel.LocalSizeText, Mode=OneWay}" />
+            <TextBlock x:Name="ViewScale" Text="{x:Bind viewModel.ViewScaleText, Mode=OneWay}" />
             <TextBlock x:Name="LocalPoint" Text="{x:Bind viewModel.LocalPointerText, Mode=OneWay}" />
+            <TextBlock x:Name="CentralizedPoint" Text="{x:Bind viewModel.CentralizedPositionText, Mode=OneWay}" />
+            <TextBlock x:Name="WorldOriginPoint" Text="{x:Bind viewModel.WorldOriginPositionText, Mode=OneWay}" />
             <TextBlock x:Name="WorldPoint" Text="{x:Bind viewModel.WorldPositionText, Mode=OneWay}" />
+            <TextBlock x:Name="NormalizedPointer" Text="{x:Bind viewModel.NormalizedPointerText, Mode=OneWay}" />
             <TextBlock x:Name="DrawLine" Text="{x:Bind viewModel.LineText, Mode=OneWay}" />
         </StackPanel>
 	</Grid>

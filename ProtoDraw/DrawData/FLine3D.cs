@@ -38,6 +38,17 @@ namespace DirectNXAML.DrawData
             m_sp.SetCol(_r, _g, _b, _a);
             m_ep.SetCol(_r, _g, _b, _a);
         }
+        public void SetThick(float _t)
+        {
+            m_sp.SetThick(_t);
+            m_ep.SetThick(_t); // wp won't be used but save for reverse
+        }
+        public void Reverse()
+        {
+            FVertex3D v = new FVertex3D(m_sp);
+            m_sp = m_ep;
+            m_ep = v;
+        }
         public void Clear()
         {
             m_sp = new(0f, 0f);

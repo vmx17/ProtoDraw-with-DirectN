@@ -1,9 +1,15 @@
-﻿using Microsoft.UI.Xaml;
+using DirectNXAML.DrawData;
+using DirectNXAML.Renderers;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+using PInvoke;
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
+using static DirectNXAML.ViewModels.DirectNPageViewModel;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -39,6 +45,7 @@ namespace DirectNXAML.Views
                 }
                 // move from here to Model/ViewModel
                 viewModel.PageRenderer.SetSwapChainPanel(_scp);
+                viewModel.SetCursorMethods += new SetCursor(this.SetCursorPosition);
                 viewModel.SCPSize_Changed += viewModel.PageRenderer.Panel_SizeChanged;
                 viewModel.PageRenderer.StartRendering();
             }
@@ -54,7 +61,6 @@ namespace DirectNXAML.Views
             viewModel.SCPSize_Changed -= viewModel.PageRenderer.Panel_SizeChanged;
             viewModel.PageRenderer.SetSwapChainPanel(null);
         }
-
         private void SetBG_White(object sender, RoutedEventArgs e)
         {
             viewModel.PageRenderer?.SetBGColor(1, 1, 1);
@@ -115,6 +121,40 @@ namespace DirectNXAML.Views
                 viewModel.ReleasedPoint = e.GetCurrentPoint(sender as SwapChainPanel).Position;
             }
             viewModel.ShaderPanel_PointerReleasedCommand.Execute(e);
+        }
+        private void SwapChainPanel_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
+        {
+            if (m_can_get_point)
+            {
+                var p = e.GetCurrentPoint(_scp);
+                var wdelta = p.Properties.MouseWheelDelta;
+                viewModel.MouseWheelDelta += wdelta;    // here is total
+                viewModel.ShaderPanel_PointerWheelChangedCommand.Execute(e); //here is delta
+            }
+        }
+
+        [DllImport("User32.dll", ExactSpelling = true, EntryPoint = "SetCursorPos", CharSet = CharSet.Unicode)]
+        public static extern bool MoveCursor(int X, int Y);
+        [DllImport("User32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        public static extern bool ClientToScreen(IntPtr hWnd, ref Windows.Graphics.PointInt32 lpPoint);
+
+        /// <summary>
+        /// Set cursor to specified position on SwawpChainPanel
+        /// https://github.com/microsoft/microsoft-ui-xaml/issues/5897
+        /// This should do the trick when null is passed as the parameter: https://docs.microsoft.com/en-us/uwp/api/windows.ui.xaml.uielement.transformtovisual?view=winrt-20348
+        /// </summary>
+        /// <param name="_x"></param>
+        /// <param name="_y"></param>
+        public void SetCursorPosition(int _x, int _y)
+        {
+            Windows.Graphics.PointInt32 pt = new Windows.Graphics.PointInt32(_x, _y);
+            ClientToScreen(((App)Application.Current).hWndCurrent, ref pt);
+            //GeneralTransform gt = _scp.TransformToVisual((UIElement)this.Content);
+            GeneralTransform gt = _scp.TransformToVisual(null); // <-- This is it!
+            Windows.Foundation.Point ptNew = gt.TransformPoint(new Windows.Foundation.Point(0, 0));
+            pt.X += (int)ptNew.X;// position of control swapchainpanel 321
+            pt.Y += (int)ptNew.Y;
+            MoveCursor(pt.X, pt.Y);
         }
     }
 }
