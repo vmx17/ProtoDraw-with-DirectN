@@ -11,7 +11,6 @@ using System.Numerics;
 using System.Text;
 using System.Windows.Input;
 using System.Drawing;
-using Microsoft.UI.Xaml.Controls;
 using DirectNXAML.Content;
 using DirectNXAML.Helpers;
 using DirectNXAML.Model;
