@@ -4,7 +4,7 @@ using System;
 using System.Runtime.InteropServices;
 using JeremyAnsel.DirectX.DXMath;
 
-namespace DirectNXAML.Renderers
+namespace DirectNXAML.Common
 {
     public abstract class RendererBase : IRendererBase, IDisposable
     {

@@ -1,5 +1,5 @@
 ﻿using DirectN;
-using DirectNXAML.DrawData;
+using DirectNXAML.Content;
 using DirectNXAML.Model;
 using JeremyAnsel.DirectX.DXMath;
 using Microsoft.UI.Xaml;
@@ -17,7 +17,7 @@ using WinRT;
 // https://github.com/smourier/DirectN/issues/8
 
 
-namespace DirectNXAML.Renderers
+namespace DirectNXAML.Common
 {
     public class Dx11Renderer : RendererBase
     {

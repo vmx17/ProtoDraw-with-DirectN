@@ -1,5 +1,5 @@
 ﻿using System.Numerics;
-namespace DirectNXAML.DrawData
+namespace DirectNXAML.Content
 {
     public class Primitive : IPrimitive
     {
