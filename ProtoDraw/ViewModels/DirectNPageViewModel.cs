@@ -76,36 +76,6 @@ namespace DirectNXAML.ViewModels
         }
 
         // for just a test drawing
-        double m_absX, m_absY;
-        double m_cx, m_cy;
-        public ICommand ShaderPanel_PointerMovedCommand { get; private set; }
-		private void ShaderPanel_PointerMoved(PointerRoutedEventArgs args)
-        {
-            SetLocalPointerText();
-
-            // should elevate to Model layer
-            if (m_state == ELineGetState.Pressed)
-            {
-                SetLineState(ELineGetState.Begin);
-                SetWheelScale();
-            }
-        }
-        internal RoutedEventHandler SetState_SelectCommand { get; private set; }
-        private void SetState_Select(object sender, RoutedEventArgs e)
-        {
-            // reset any state machine before here
-            SetLineState(ELineGetState.none);
-            //(Application.Current as App).CurrentWindow.CoreWindow.PointerCursor = new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Arrow, 0);
-        }
-        internal ICommand ShaderPanel_SizeChangedCommand { get; private set; }
-        private void ShaderPanel_SizeChanged(SizeChangedEventArgs args)
-        {
-            SetActualSizeText();
-            var s = args.NewSize;
-            RenderWidth = s.Width;
-            RenderHeight = s.Height;
-            SCPSize_Changed?.Invoke(this, args);
-        }
 
         /// <summary>
         /// absolute current pointer position (on real)
@@ -119,9 +89,33 @@ namespace DirectNXAML.ViewModels
         /// centralized pointer position on SwapChainPanel (on screen)
         /// </summary>
         double m_cX = 0, m_cY = 0;
+        double m_cx, m_cy;
+        internal RoutedEventHandler SetState_SelectCommand { get; private set; }
+        private void SetState_Select(object sender, RoutedEventArgs e)
+        {
+            // reset any state machine before here
+            SetLineState(ELineGetState.none);
+            //(Application.Current as App).CurrentWindow.CoreWindow.PointerCursor = new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Arrow, 0);
+        }
+        internal RoutedEventHandler SetState_DrawLineCommand { get; private set; }
+        private void SetState_DrawLine(object sender, RoutedEventArgs e)
+        {
+            // reset any state machine before here
+            SetLineState(ELineGetState.Begin);
+            //(Application.Current as App).CurrentWindow.CoreWindow.PointerCursor = new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Arrow, 0);
+        }
+        internal ICommand ShaderPanel_SizeChangedCommand { get; private set; }
+        private void ShaderPanel_SizeChanged(SizeChangedEventArgs args)
+        {
+            SetActualSizeText();
+            var s = args.NewSize;
+            RenderWidth = s.Width;
+            RenderHeight = s.Height;
+            SCPSize_Changed?.Invoke(this, args);
+        }
 
         public ICommand ShaderPanel_PointerMovedCommand { get; private set; }
-		private void ShaderPanel_PointerMoved(PointerRoutedEventArgs args)
+        private void ShaderPanel_PointerMoved(PointerRoutedEventArgs args)
         {
             GetMouseButton(args);
             SetLocalPointerText();
@@ -160,7 +154,7 @@ namespace DirectNXAML.ViewModels
             }
         }
 
-		internal ICommand ShaderPanel_PointerPressedCommand { get; private set; }
+        internal ICommand ShaderPanel_PointerPressedCommand { get; private set; }
 		private void ShaderPanel_PointerPressed(PointerRoutedEventArgs args)
         {
             GetMouseButton(args);
@@ -257,7 +251,6 @@ namespace DirectNXAML.ViewModels
             }
         }
 
-
         /// <summary>
         /// recognize mouse button
         /// </summary>
@@ -290,7 +283,6 @@ namespace DirectNXAML.ViewModels
             m_renderer.ViewScale = (float)m_viewScale;
             SetViewScaleText();
         }
-        #endregion
 
         #region for display
 
@@ -500,7 +492,7 @@ namespace DirectNXAML.ViewModels
 		internal double LocalHeight { get => m_local_height; set => m_local_height = value; }
 		internal double LocalWidth { get => m_local_width; set => m_local_width = value; }
 
-		Windows.Foundation.Point m_local_point;
+		Windows.Foundation.Point m_local_point, m_normalized_local_point;
 		internal Windows.Foundation.Point LocalPointerPoint { get => m_local_point; set => m_local_point = value; }
 
         Windows.Foundation.Point m_pressed_point;

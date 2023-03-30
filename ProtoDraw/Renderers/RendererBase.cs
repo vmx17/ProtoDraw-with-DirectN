@@ -2,6 +2,7 @@
 using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Runtime.InteropServices;
+using JeremyAnsel.DirectX.DXMath;
 
 namespace DirectNXAML.Renderers
 {
