@@ -3,7 +3,7 @@ using System.Numerics;
 using System.Linq;
 using ABI.Windows.Foundation;
 
-namespace DirectNXAML.DrawData
+namespace DirectNXAML.Content
 {
     /// <summary>
     /// 3D vertex in float

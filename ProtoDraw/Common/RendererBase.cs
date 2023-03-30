@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DirectNXAML.Renderers
+namespace DirectNXAML.Common
 {
     public abstract class RendererBase : IRendererBase, IDisposable
     {

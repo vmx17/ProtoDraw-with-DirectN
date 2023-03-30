@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using DirectNXAML.DrawData;
+using DirectNXAML.Content;
 
 namespace DirectNXAML.Model
 {

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace y2Lib
+namespace DirectNXAML.Helpers
 {
     public class BoolEventArgs : EventArgs
     {
@@ -82,7 +82,7 @@ namespace y2Lib
             Initial = _init;
             Min = _min;
             Max = _max;
-            Color = (_color == default) ? Color.LightGreen : _color;
+            Color = _color == default ? Color.LightGreen : _color;
         }
     }
     public delegate void InitializeProgressBarEventHandler(object sender, InitializeProgressBarEventArgs e);

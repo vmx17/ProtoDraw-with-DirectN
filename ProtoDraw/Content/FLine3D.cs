@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Numerics;
 
-namespace DirectNXAML.DrawData
+namespace DirectNXAML.Content
 {
     public class FLine3D : Primitive
     {
